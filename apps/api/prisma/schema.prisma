@@ -1,0 +1,266 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+enum PublicationCategory {
+  BERITA_KEGIATAN
+  ARTIKEL_RENUNGAN
+  PUBLIKASI_RESMI
+}
+enum ScheduleType {
+  IBADAH_MINGGU
+  PARTANGIANGAN
+  PELAYANAN_KHUSUS
+}
+enum WartaLanguage {
+  INDONESIA
+  BATAK
+}
+enum MediaType {
+  IMAGE
+  PDF
+  DOCUMENT
+}
+
+model User {
+  id           String     @id @default(uuid())
+  name         String
+  email        String     @unique
+  passwordHash String
+  isActive     Boolean    @default(true)
+  roles        UserRole[]
+  auditLogs    AuditLog[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  deletedAt    DateTime?
+}
+
+model Role {
+  id          String           @id @default(uuid())
+  name        String           @unique
+  description String?
+  users       UserRole[]
+  permissions RolePermission[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model Permission {
+  id          String           @id @default(uuid())
+  key         String           @unique
+  description String?
+  roles       RolePermission[]
+}
+
+model UserRole {
+  userId String
+  roleId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  @@id([userId, roleId])
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  @@id([roleId, permissionId])
+}
+
+model Page {
+  id             String          @id @default(uuid())
+  slug           String          @unique
+  title          String
+  eyebrow        String?
+  description    String
+  summary        String?
+  callout        String?
+  layoutVariant  String?
+  seoTitle       String?
+  seoDescription String?
+  status         ContentStatus   @default(DRAFT)
+  highlights     PageHighlight[]
+  sections       PageSection[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  deletedAt      DateTime?
+}
+
+model PageHighlight {
+  id        String @id @default(uuid())
+  pageId    String
+  text      String
+  sortOrder Int    @default(0)
+  page      Page   @relation(fields: [pageId], references: [id], onDelete: Cascade)
+}
+
+model PageSection {
+  id        String @id @default(uuid())
+  pageId    String
+  title     String
+  body      String
+  sortOrder Int    @default(0)
+  page      Page   @relation(fields: [pageId], references: [id], onDelete: Cascade)
+}
+
+model OrganizationCategory {
+  id          String          @id @default(uuid())
+  slug        String          @unique
+  name        String
+  description String?
+  sortOrder   Int             @default(0)
+  profiles    PersonProfile[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model PersonProfile {
+  id            String                @id @default(uuid())
+  categoryId    String?
+  name          String
+  role          String
+  bio           String?
+  photoUrl      String?
+  servicePeriod String?
+  sortOrder     Int                   @default(0)
+  isActive      Boolean               @default(true)
+  category      OrganizationCategory? @relation(fields: [categoryId], references: [id])
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  deletedAt     DateTime?
+}
+
+model Wijk {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  coordinator String?
+  contact     String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+}
+
+model MediaAsset {
+  id           String        @id @default(uuid())
+  type         MediaType
+  url          String
+  fileName     String
+  mimeType     String
+  sizeBytes    Int
+  altText      String?
+  description  String?
+  galleryItems GalleryItem[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model GalleryItem {
+  id          String        @id @default(uuid())
+  mediaId     String
+  title       String?
+  description String?
+  category    String?
+  eventDate   DateTime?
+  sortOrder   Int           @default(0)
+  status      ContentStatus @default(DRAFT)
+  media       MediaAsset    @relation(fields: [mediaId], references: [id])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+}
+
+model Publication {
+  id             String              @id @default(uuid())
+  slug           String              @unique
+  title          String
+  category       PublicationCategory
+  excerpt        String
+  content        String[]
+  author         String
+  publishedAt    DateTime?
+  thumbnailUrl   String?
+  thumbnailTone  String?
+  readTime       String?
+  seoTitle       String?
+  seoDescription String?
+  status         ContentStatus       @default(DRAFT)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  deletedAt      DateTime?
+}
+
+model Warta {
+  id              String        @id @default(uuid())
+  slug            String        @unique
+  title           String
+  date            DateTime
+  liturgicalColor String
+  theme           String
+  preacher        String
+  excerpt         String
+  isCurrent       Boolean       @default(false)
+  status          ContentStatus @default(DRAFT)
+  pdfVersions     WartaPdf[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  deletedAt       DateTime?
+}
+
+model WartaPdf {
+  id       String        @id @default(uuid())
+  wartaId  String
+  language WartaLanguage
+  label    String
+  fileUrl  String
+  fileName String
+  warta    Warta         @relation(fields: [wartaId], references: [id], onDelete: Cascade)
+  @@unique([wartaId, language])
+}
+
+model Schedule {
+  id          String        @id @default(uuid())
+  type        ScheduleType
+  title       String
+  startsAt    DateTime
+  endsAt      DateTime?
+  location    String?
+  preacher    String?
+  description String?
+  wijk        String?
+  status      ContentStatus @default(DRAFT)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+}
+
+model SiteSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  action     String
+  entityType String
+  entityId   String?
+  metadata   Json?
+  user       User?    @relation(fields: [userId], references: [id])
+  createdAt  DateTime @default(now())
+}
