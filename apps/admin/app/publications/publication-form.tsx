@@ -50,7 +50,7 @@ const emptyForm: FormState = {
   title: "",
   category: "BERITA_KEGIATAN",
   contentHtml: "",
-  author: "Tim Publikasi",
+  author: "",
   publishedAt: new Date().toISOString().slice(0, 10),
   thumbnailUrl: "",
   thumbnailTone: "",
@@ -106,11 +106,11 @@ const toForm = (item: Publication): FormState => ({
   status: item.status,
 });
 
-export function PublicationForm({ initialItem }: { initialItem?: Publication }) {
+export function PublicationForm({ initialItem, currentUserName }: { initialItem?: Publication; currentUserName: string }) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
-  const [form, setForm] = useState<FormState>(initialItem ? toForm(initialItem) : emptyForm);
+  const [form, setForm] = useState<FormState>({ ...(initialItem ? toForm(initialItem) : emptyForm), author: currentUserName });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [notice, setNotice] = useState("");
@@ -173,6 +173,7 @@ export function PublicationForm({ initialItem }: { initialItem?: Publication }) 
     const payload = {
       ...form,
       slug: toSlug(form.title),
+      author: currentUserName,
       excerpt,
       readTime: null,
       seoTitle: form.title,
@@ -235,7 +236,7 @@ export function PublicationForm({ initialItem }: { initialItem?: Publication }) 
             <Field label="Title" value={form.title} onChange={updateTitle} required />
             <Select label="Kategori" value={form.category} onChange={(value) => update("category", value as Category)} options={categories} />
             <Select label="Status" value={form.status} onChange={(value) => update("status", value as Status)} options={statuses.map((status) => ({ value: status, label: status }))} />
-            <Field label="Author" value={form.author} onChange={(value) => update("author", value)} required />
+            <Field label="Author" value={currentUserName} onChange={() => undefined} required readOnly />
             <Field label="Tanggal Publish" type="date" value={form.publishedAt} onChange={(value) => update("publishedAt", value)} />
             <div className="grid gap-2 text-sm font-semibold text-slate-700">
               Thumbnail URL
@@ -292,11 +293,11 @@ function Header({ title, saving, remove }: { title: string; saving: boolean; rem
   );
 }
 
-function Field({ label, value, onChange, type = "text", required }: { label: string; value: string; onChange: (value: string) => void; type?: string; required?: boolean }) {
+function Field({ label, value, onChange, type = "text", required, readOnly }: { label: string; value: string; onChange: (value: string) => void; type?: string; required?: boolean; readOnly?: boolean }) {
   return (
     <label className="grid gap-2 text-sm font-semibold text-slate-700">
       {label}
-      <input className="h-10 rounded-md border border-slate-300 px-3 text-sm" type={type} value={value} required={required} onChange={(event) => onChange(event.target.value)} />
+      <input className="h-10 rounded-md border border-slate-300 px-3 text-sm read-only:bg-slate-100 read-only:text-slate-600" type={type} value={value} required={required} readOnly={readOnly} onChange={(event) => onChange(event.target.value)} />
     </label>
   );
 }

@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { requireAuth } from "../lib/auth.js";
+import { requireAuth, type AuthenticatedRequest } from "../lib/auth.js";
 import { prisma } from "../lib/prisma.js";
 import { ok } from "../lib/response.js";
 
@@ -26,6 +26,11 @@ const optional = (value: string | null | undefined) => value?.trim() ? value.tri
 const stripHtml = (value: string) => value.replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/\s+/g, " ").trim();
 const excerptFromContent = (content: string[]) => stripHtml(content.join(" ")).split(" ").filter(Boolean).slice(0, 28).join(" ");
 const seoDescriptionFromContent = (content: string[]) => stripHtml(content.join(" ")).split(" ").filter(Boolean).slice(0, 32).join(" ");
+
+async function currentAuthorName(request: AuthenticatedRequest) {
+  const user = await prisma.user.findUnique({ where: { id: request.user.sub }, select: { name: true } });
+  return user?.name ?? request.user.email;
+}
 
 export async function adminPublicationRoutes(app: FastifyInstance) {
   app.addHook("preHandler", requireAuth);
@@ -55,6 +60,7 @@ export async function adminPublicationRoutes(app: FastifyInstance) {
     const parsed = payloadSchema.safeParse(request.body);
     if (!parsed.success) return reply.code(400).send({ success: false, data: null, message: "Data publikasi belum valid", meta: parsed.error.flatten() });
     const payload = parsed.data;
+    const author = await currentAuthorName(request as AuthenticatedRequest);
     const existing = await prisma.publication.findUnique({ where: { slug: payload.slug } });
     if (existing && !existing.deletedAt) return reply.code(409).send({ success: false, data: null, message: "Slug sudah dipakai publikasi lain" });
     const excerpt = optional(payload.excerpt) ?? excerptFromContent(payload.content);
@@ -66,7 +72,7 @@ export async function adminPublicationRoutes(app: FastifyInstance) {
       category: payload.category,
       excerpt,
       content: payload.content,
-      author: payload.author,
+      author,
       publishedAt: payload.publishedAt ? new Date(payload.publishedAt) : null,
       thumbnailUrl: optional(payload.thumbnailUrl),
       thumbnailTone: optional(payload.thumbnailTone),
@@ -94,6 +100,7 @@ export async function adminPublicationRoutes(app: FastifyInstance) {
     const duplicate = await prisma.publication.findUnique({ where: { slug: parsed.data.slug } });
     if (duplicate && duplicate.id !== id && !duplicate.deletedAt) return reply.code(409).send({ success: false, data: null, message: "Slug sudah dipakai publikasi lain" });
     const payload = parsed.data;
+    const author = await currentAuthorName(request as AuthenticatedRequest);
     const excerpt = optional(payload.excerpt) ?? excerptFromContent(payload.content);
     if (!excerpt) return reply.code(400).send({ success: false, data: null, message: "Content publikasi belum valid" });
     const seoDescription = optional(payload.seoDescription) ?? seoDescriptionFromContent(payload.content);
@@ -103,7 +110,7 @@ export async function adminPublicationRoutes(app: FastifyInstance) {
       category: payload.category,
       excerpt,
       content: payload.content,
-      author: payload.author,
+      author,
       publishedAt: payload.publishedAt ? new Date(payload.publishedAt) : null,
       thumbnailUrl: optional(payload.thumbnailUrl),
       thumbnailTone: optional(payload.thumbnailTone),
