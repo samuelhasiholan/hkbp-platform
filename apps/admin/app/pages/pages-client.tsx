@@ -42,7 +42,7 @@ export function PagesClient() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("ALL");
   const [currentPage, setCurrentPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
   const totalPages = useMemo(() => Math.max(Math.ceil(meta.total / meta.limit), 1), [meta.limit, meta.total]);

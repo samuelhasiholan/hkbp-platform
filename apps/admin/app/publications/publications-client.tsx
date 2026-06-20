@@ -18,7 +18,7 @@ export function PublicationsClient() {
   const [status, setStatus] = useState("ALL");
   const [category, setCategory] = useState("ALL");
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const totalPages = useMemo(() => Math.max(Math.ceil(meta.total / meta.limit), 1), [meta]);
 

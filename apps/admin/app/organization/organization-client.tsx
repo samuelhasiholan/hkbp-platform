@@ -16,7 +16,7 @@ export function OrganizationClient() {
   const [wijk, setWijk] = useState<Wijk[]>([]);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [categoryForm, setCategoryForm] = useState({ slug: "", name: "", description: "", sortOrder: 0 });
