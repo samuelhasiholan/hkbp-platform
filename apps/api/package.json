@@ -7,7 +7,9 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/src/server.js",
-    "prisma": "prisma"
+    "prisma": "prisma",
+    "db:seed:pages": "tsx prisma/seed-pages-from-frontend.ts",
+    "db:seed:cms": "tsx prisma/seed-cms-content-from-frontend.ts"
   },
   "dependencies": {
     "@fastify/cors": "^11.0.0",
