@@ -8,6 +8,7 @@ import fastify from "fastify";
 import { adminGalleryRoutes } from "./routes/admin-gallery.js";
 import { adminOrganizationRoutes } from "./routes/admin-organization.js";
 import { adminPublicationRoutes } from "./routes/admin-publications.js";
+import { adminSettingsRoutes } from "./routes/admin-settings.js";
 import { adminWartaRoutes } from "./routes/admin-warta.js";
 import { adminPageRoutes } from "./routes/admin-pages.js";
 import { authRoutes } from "./routes/auth.js";
@@ -26,6 +27,7 @@ await app.register(adminOrganizationRoutes);
 await app.register(adminGalleryRoutes);
 await app.register(adminWartaRoutes);
 await app.register(adminPublicationRoutes);
+await app.register(adminSettingsRoutes);
 await app.register(publicRoutes);
 
 app.setErrorHandler((error, _request, reply) => {
