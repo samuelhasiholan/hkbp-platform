@@ -2,6 +2,7 @@ import { CalendarDays, FileText, GalleryHorizontalEnd, LayoutDashboard, Newspape
 import Link from "next/link";
 import type { CurrentUser } from "../_lib/auth";
 import { LogoutButton } from "./logout-button";
+import { SessionRefresh } from "./session-refresh";
 
 const navigation = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -17,6 +18,7 @@ const navigation = [
 export function AdminShell({ children, title, eyebrow, user }: { children: React.ReactNode; title: string; eyebrow: string; user: CurrentUser }) {
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
+      <SessionRefresh />
       <div className="grid min-h-screen lg:grid-cols-[260px_1fr]">
         <aside className="border-r border-slate-200 bg-white px-4 py-5">
           <div className="px-2">
