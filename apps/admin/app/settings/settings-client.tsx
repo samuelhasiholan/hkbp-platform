@@ -137,7 +137,7 @@ export function SettingsClient() {
             <p className="mt-1 text-sm text-slate-500">Konten ini tampil di bawah Hero halaman Beranda.</p>
           </div>
           <div className="flex gap-2">
-            <button type="button" onClick={loadSettings} disabled={loading || saving} className="inline-flex h-10 items-center gap-2 rounded-md border border-slate-300 px-3 text-sm font-bold disabled:opacity-50">
+            <button type="button" onClick={loadSettings} disabled={hydrated && (loading || saving)} className="inline-flex h-10 items-center gap-2 rounded-md border border-slate-300 px-3 text-sm font-bold disabled:opacity-50">
               {loading ? <Loader2 className="animate-spin" size={16} /> : <RefreshCcw size={16} />}
               Muat
             </button>

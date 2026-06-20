@@ -18,6 +18,7 @@ export function PublicationsClient() {
   const [status, setStatus] = useState("ALL");
   const [category, setCategory] = useState("ALL");
   const [page, setPage] = useState(1);
+  const [hydrated, setHydrated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const totalPages = useMemo(() => Math.max(Math.ceil(meta.total / meta.limit), 1), [meta]);
@@ -43,7 +44,7 @@ export function PublicationsClient() {
     }
   }
 
-  useEffect(() => { load(1); }, []);
+  useEffect(() => { setHydrated(true); load(1); }, []);
   function submit(event: FormEvent) { event.preventDefault(); load(1); }
   function go(nextPage: number) { const next = Math.min(Math.max(nextPage, 1), totalPages); if (next !== page) load(next); }
 
@@ -74,9 +75,9 @@ export function PublicationsClient() {
             </tbody>
           </table>
         </div>
-        <Pager page={page} totalPages={totalPages} meta={meta} count={items.length} go={go} loading={loading}/>
+        <Pager hydrated={hydrated} page={page} totalPages={totalPages} meta={meta} count={items.length} go={go} loading={loading}/>
       </section>
     </div>
   );
 }
-function Pager({ page, totalPages, meta, count, go, loading }: { page: number; totalPages: number; meta: Meta; count: number; go: (next: number) => void; loading: boolean }) { return <div className="flex flex-col gap-3 border-t p-4 sm:flex-row sm:items-center sm:justify-between"><p className="text-sm text-slate-500">Menampilkan {count ? (page - 1) * meta.limit + 1 : 0}-{Math.min(page * meta.limit, meta.total)} dari {meta.total} data</p><div className="flex items-center gap-2"><button disabled={page <= 1 || loading} onClick={() => go(page - 1)} className="inline-flex h-9 items-center gap-2 rounded-md border px-3 text-sm font-bold disabled:opacity-50"><ChevronLeft size={16}/>Prev</button><span className="min-w-24 text-center text-sm font-bold">{page} / {totalPages}</span><button disabled={page >= totalPages || loading} onClick={() => go(page + 1)} className="inline-flex h-9 items-center gap-2 rounded-md border px-3 text-sm font-bold disabled:opacity-50">Next<ChevronRight size={16}/></button></div></div>; }
+function Pager({ hydrated, page, totalPages, meta, count, go, loading }: { hydrated: boolean; page: number; totalPages: number; meta: Meta; count: number; go: (next: number) => void; loading: boolean }) { return <div className="flex flex-col gap-3 border-t p-4 sm:flex-row sm:items-center sm:justify-between"><p className="text-sm text-slate-500">Menampilkan {count ? (page - 1) * meta.limit + 1 : 0}-{Math.min(page * meta.limit, meta.total)} dari {meta.total} data</p><div className="flex items-center gap-2"><button disabled={hydrated && (page <= 1 || loading)} onClick={() => go(page - 1)} className="inline-flex h-9 items-center gap-2 rounded-md border px-3 text-sm font-bold disabled:opacity-50"><ChevronLeft size={16}/>Prev</button><span className="min-w-24 text-center text-sm font-bold">{page} / {totalPages}</span><button disabled={hydrated && (page >= totalPages || loading)} onClick={() => go(page + 1)} className="inline-flex h-9 items-center gap-2 rounded-md border px-3 text-sm font-bold disabled:opacity-50">Next<ChevronRight size={16}/></button></div></div>; }

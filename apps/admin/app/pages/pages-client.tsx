@@ -42,6 +42,7 @@ export function PagesClient() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("ALL");
   const [currentPage, setCurrentPage] = useState(1);
+  const [hydrated, setHydrated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -70,6 +71,7 @@ export function PagesClient() {
   }
 
   useEffect(() => {
+    setHydrated(true);
     loadPages(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -176,12 +178,12 @@ export function PagesClient() {
             Menampilkan {pages.length ? (currentPage - 1) * meta.limit + 1 : 0}-{Math.min(currentPage * meta.limit, meta.total)} dari {meta.total} data
           </p>
           <div className="flex items-center gap-2">
-            <button className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm font-bold text-slate-700 disabled:opacity-50" disabled={currentPage <= 1 || isLoading} onClick={() => goToPage(currentPage - 1)} type="button">
+            <button className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm font-bold text-slate-700 disabled:opacity-50" disabled={hydrated && (currentPage <= 1 || isLoading)} onClick={() => goToPage(currentPage - 1)} type="button">
               <ChevronLeft size={16} aria-hidden="true" />
               Prev
             </button>
             <span className="min-w-24 text-center text-sm font-bold text-slate-700">{currentPage} / {totalPages}</span>
-            <button className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm font-bold text-slate-700 disabled:opacity-50" disabled={currentPage >= totalPages || isLoading} onClick={() => goToPage(currentPage + 1)} type="button">
+            <button className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm font-bold text-slate-700 disabled:opacity-50" disabled={hydrated && (currentPage >= totalPages || isLoading)} onClick={() => goToPage(currentPage + 1)} type="button">
               Next
               <ChevronRight size={16} aria-hidden="true" />
             </button>
