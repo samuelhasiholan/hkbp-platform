@@ -37,6 +37,10 @@ function normalizeOptional(value: string | null | undefined) {
   return value?.trim() ? value.trim() : null;
 }
 
+function seoDescription(payload: { seoDescription?: string | null; summary?: string | null; description: string }) {
+  return normalizeOptional(payload.seoDescription) ?? normalizeOptional(payload.summary) ?? payload.description;
+}
+
 export async function adminPageRoutes(app: FastifyInstance) {
   app.addHook("preHandler", requireAuth);
 
@@ -95,8 +99,8 @@ export async function adminPageRoutes(app: FastifyInstance) {
         summary: normalizeOptional(payload.summary),
         callout: normalizeOptional(payload.callout),
         layoutVariant: normalizeOptional(payload.layoutVariant),
-        seoTitle: normalizeOptional(payload.seoTitle),
-        seoDescription: normalizeOptional(payload.seoDescription),
+        seoTitle: normalizeOptional(payload.seoTitle) ?? payload.title,
+        seoDescription: seoDescription(payload),
         status: payload.status,
         highlights: { create: payload.highlights.map((text, sortOrder) => ({ text, sortOrder })) },
         sections: { create: payload.sections.map((section, sortOrder) => ({ ...section, sortOrder })) },
@@ -143,8 +147,8 @@ export async function adminPageRoutes(app: FastifyInstance) {
           summary: normalizeOptional(payload.summary),
           callout: normalizeOptional(payload.callout),
           layoutVariant: normalizeOptional(payload.layoutVariant),
-          seoTitle: normalizeOptional(payload.seoTitle),
-          seoDescription: normalizeOptional(payload.seoDescription),
+          seoTitle: normalizeOptional(payload.seoTitle) ?? payload.title,
+          seoDescription: seoDescription(payload),
           status: payload.status,
           highlights: { create: payload.highlights.map((text, sortOrder) => ({ text, sortOrder })) },
           sections: { create: payload.sections.map((section, sortOrder) => ({ ...section, sortOrder })) },

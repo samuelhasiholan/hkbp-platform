@@ -36,8 +36,6 @@ type PageFormState = {
   summary: string;
   callout: string;
   layoutVariant: string;
-  seoTitle: string;
-  seoDescription: string;
   status: ContentStatus;
   highlights: string[];
   sections: PageSection[];
@@ -51,8 +49,6 @@ const emptyForm: PageFormState = {
   summary: "",
   callout: "",
   layoutVariant: "article",
-  seoTitle: "",
-  seoDescription: "",
   status: "DRAFT",
   highlights: [""],
   sections: [{ title: "", body: "" }],
@@ -78,8 +74,6 @@ function pageToForm(page: PageItem): PageFormState {
     summary: page.summary ?? "",
     callout: page.callout ?? "",
     layoutVariant: page.layoutVariant ?? "article",
-    seoTitle: page.seoTitle ?? "",
-    seoDescription: page.seoDescription ?? "",
     status: page.status,
     highlights: page.highlights.length ? page.highlights.map((item) => item.text) : [""],
     sections: page.sections.length ? page.sections.map((item) => ({ title: item.title, body: item.body })) : [{ title: "", body: "" }],
@@ -90,6 +84,8 @@ function cleanForm(form: PageFormState) {
   return {
     ...form,
     slug: toSlug(form.slug),
+    seoTitle: form.title.trim(),
+    seoDescription: (form.summary || form.description).trim(),
     highlights: form.highlights.map((item) => item.trim()).filter(Boolean),
     sections: form.sections
       .map((section) => ({ title: section.title.trim(), body: section.body.trim() }))
@@ -275,8 +271,6 @@ export function PageForm({ initialPage }: { initialPage?: PageItem }) {
           <div className="grid gap-4 md:grid-cols-2">
             <Field label="Layout Variant" value={form.layoutVariant} onChange={(value) => setField("layoutVariant", value)} placeholder="article, wijk, pastors" />
             <Field label="Callout" value={form.callout} onChange={(value) => setField("callout", value)} />
-            <Field label="SEO Title" value={form.seoTitle} onChange={(value) => setField("seoTitle", value)} />
-            <Field label="SEO Description" value={form.seoDescription} onChange={(value) => setField("seoDescription", value)} />
           </div>
 
           {form.status === "PUBLISHED" ? (

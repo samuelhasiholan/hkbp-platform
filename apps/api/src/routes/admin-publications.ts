@@ -11,7 +11,7 @@ const payloadSchema = z.object({
   slug: slugSchema,
   title: z.string().trim().min(1),
   category: categorySchema,
-  excerpt: z.string().trim().min(1),
+  excerpt: z.string().trim().optional().nullable(),
   content: z.array(z.string().trim().min(1)).default([]),
   author: z.string().trim().min(1),
   publishedAt: z.string().datetime().optional().nullable(),
@@ -23,6 +23,9 @@ const payloadSchema = z.object({
   status: statusSchema.default("DRAFT"),
 });
 const optional = (value: string | null | undefined) => value?.trim() ? value.trim() : null;
+const stripHtml = (value: string) => value.replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/\s+/g, " ").trim();
+const excerptFromContent = (content: string[]) => stripHtml(content.join(" ")).split(" ").filter(Boolean).slice(0, 28).join(" ");
+const seoDescriptionFromContent = (content: string[]) => stripHtml(content.join(" ")).split(" ").filter(Boolean).slice(0, 32).join(" ");
 
 export async function adminPublicationRoutes(app: FastifyInstance) {
   app.addHook("preHandler", requireAuth);
@@ -54,19 +57,22 @@ export async function adminPublicationRoutes(app: FastifyInstance) {
     const payload = parsed.data;
     const existing = await prisma.publication.findUnique({ where: { slug: payload.slug } });
     if (existing && !existing.deletedAt) return reply.code(409).send({ success: false, data: null, message: "Slug sudah dipakai publikasi lain" });
+    const excerpt = optional(payload.excerpt) ?? excerptFromContent(payload.content);
+    if (!excerpt) return reply.code(400).send({ success: false, data: null, message: "Content publikasi belum valid" });
+    const seoDescription = optional(payload.seoDescription) ?? seoDescriptionFromContent(payload.content);
     const item = await prisma.publication.create({ data: {
       slug: payload.slug,
       title: payload.title,
       category: payload.category,
-      excerpt: payload.excerpt,
+      excerpt,
       content: payload.content,
       author: payload.author,
       publishedAt: payload.publishedAt ? new Date(payload.publishedAt) : null,
       thumbnailUrl: optional(payload.thumbnailUrl),
       thumbnailTone: optional(payload.thumbnailTone),
       readTime: optional(payload.readTime),
-      seoTitle: optional(payload.seoTitle),
-      seoDescription: optional(payload.seoDescription),
+      seoTitle: optional(payload.seoTitle) ?? payload.title,
+      seoDescription,
       status: payload.status,
     } });
     return reply.code(201).send(ok(item, undefined, "Publikasi berhasil dibuat"));
@@ -88,19 +94,22 @@ export async function adminPublicationRoutes(app: FastifyInstance) {
     const duplicate = await prisma.publication.findUnique({ where: { slug: parsed.data.slug } });
     if (duplicate && duplicate.id !== id && !duplicate.deletedAt) return reply.code(409).send({ success: false, data: null, message: "Slug sudah dipakai publikasi lain" });
     const payload = parsed.data;
+    const excerpt = optional(payload.excerpt) ?? excerptFromContent(payload.content);
+    if (!excerpt) return reply.code(400).send({ success: false, data: null, message: "Content publikasi belum valid" });
+    const seoDescription = optional(payload.seoDescription) ?? seoDescriptionFromContent(payload.content);
     const item = await prisma.publication.update({ where: { id }, data: {
       slug: payload.slug,
       title: payload.title,
       category: payload.category,
-      excerpt: payload.excerpt,
+      excerpt,
       content: payload.content,
       author: payload.author,
       publishedAt: payload.publishedAt ? new Date(payload.publishedAt) : null,
       thumbnailUrl: optional(payload.thumbnailUrl),
       thumbnailTone: optional(payload.thumbnailTone),
       readTime: optional(payload.readTime),
-      seoTitle: optional(payload.seoTitle),
-      seoDescription: optional(payload.seoDescription),
+      seoTitle: optional(payload.seoTitle) ?? payload.title,
+      seoDescription,
       status: payload.status,
     } });
     return ok(item, undefined, "Publikasi berhasil diperbarui");
