@@ -29,13 +29,50 @@ const defaultSettings = {
   },
 };
 
+type PastorGreetingSetting = typeof defaultSettings.pastorGreeting & {
+  pastorProfileId?: string;
+};
+
+async function hydratePastorGreeting(value: unknown) {
+  const greeting = {
+    ...defaultSettings.pastorGreeting,
+    ...((value ?? {}) as Partial<PastorGreetingSetting>),
+  };
+
+  if (!greeting.pastorProfileId) {
+    return greeting;
+  }
+
+  const pastor = await prisma.personProfile.findFirst({
+    where: {
+      id: greeting.pastorProfileId,
+      deletedAt: null,
+      isActive: true,
+    },
+  });
+
+  if (!pastor) {
+    return greeting;
+  }
+
+  return {
+    ...greeting,
+    pastorName: pastor.name,
+    pastorRole: pastor.role,
+    photoUrl: pastor.photoUrl ?? "",
+  };
+}
+
 async function readSettings() {
   const settings = await prisma.siteSetting.findMany({
     where: { key: { in: ["pastorGreeting"] } },
   });
+  const values = Object.fromEntries(settings.map((item) => [item.key, item.value]));
+
   return {
     ...defaultSettings,
-    ...Object.fromEntries(settings.map((item) => [item.key, item.value])),
+    ...values,
+    pastorGreeting: await hydratePastorGreeting(values.pastorGreeting),
   };
 }
 

@@ -159,8 +159,16 @@ export function SettingsClient() {
           </div>
 
           {selectedPastor ? (
-            <div className="rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-600">
-              Data jabatan dan foto akan mengikuti profil organisasi: <span className="font-semibold">{selectedPastor.role}</span>.
+            <div className="flex items-center gap-3 rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-600">
+              <div className="h-14 w-14 shrink-0 overflow-hidden rounded-md bg-slate-200">
+                {selectedPastor.photoUrl ? <img src={selectedPastor.photoUrl} alt={selectedPastor.name} className="h-full w-full object-cover" /> : null}
+              </div>
+              <div>
+                <p>
+                  Data jabatan dan foto akan mengikuti profil organisasi: <span className="font-semibold">{selectedPastor.role}</span>.
+                </p>
+                {selectedPastor.photoUrl ? <p className="mt-1 truncate text-xs text-slate-500">{selectedPastor.photoUrl}</p> : <p className="mt-1 text-xs text-amber-700">Profil ini belum memiliki foto.</p>}
+              </div>
             </div>
           ) : null}
 

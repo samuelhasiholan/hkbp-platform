@@ -226,7 +226,7 @@ function Text({ label, value, onChange }: { label: string; value: string; onChan
   return (
     <label className="grid gap-2 text-sm font-semibold text-slate-700">
       {label}
-      <textarea required rows={6} className="rounded-md border border-slate-300 px-3 py-2 text-sm leading-6" value={value} onChange={(event) => onChange(event.target.value)} />
+      <textarea rows={6} className="rounded-md border border-slate-300 px-3 py-2 text-sm leading-6" value={value} onChange={(event) => onChange(event.target.value)} />
     </label>
   );
 }
