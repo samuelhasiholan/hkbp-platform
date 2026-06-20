@@ -1,8 +1,13 @@
 "use client";
 
 import {
+  AlignCenter,
+  AlignJustify,
+  AlignLeft,
+  AlignRight,
   ArrowLeft,
   Bold,
+  ImageIcon,
   Italic,
   List,
   ListOrdered,
@@ -152,7 +157,9 @@ export function PublicationForm({
 }) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const contentImageInputRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
+  const savedSelectionRef = useRef<Range | null>(null);
   const [form, setForm] = useState<FormState>({
     ...(initialItem ? toForm(initialItem) : emptyForm),
     author: currentUserName,
@@ -161,6 +168,7 @@ export function PublicationForm({
   const latestContentHtml = useRef(form.contentHtml);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingContentImage, setUploadingContentImage] = useState(false);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const isEdit = Boolean(initialItem);
@@ -177,10 +185,67 @@ export function PublicationForm({
     }));
   }
 
+  function saveEditorSelection() {
+    const selection = window.getSelection();
+    if (!selection?.rangeCount || !editorRef.current) return;
+    const range = selection.getRangeAt(0);
+    if (!editorRef.current.contains(range.commonAncestorContainer)) return;
+    savedSelectionRef.current = range.cloneRange();
+  }
+
+  function restoreEditorSelection() {
+    if (!savedSelectionRef.current) return;
+    const selection = window.getSelection();
+    if (!selection) return;
+    selection.removeAllRanges();
+    selection.addRange(savedSelectionRef.current);
+  }
+
   function runEditorCommand(command: string) {
     editorRef.current?.focus();
+    restoreEditorSelection();
     document.execCommand(command);
     latestContentHtml.current = editorRef.current?.innerHTML ?? "";
+    saveEditorSelection();
+  }
+
+  function insertEditorImage(url: string) {
+    editorRef.current?.focus();
+    restoreEditorSelection();
+    document.execCommand("insertHTML", false, `<p><img src="${url}" alt="" style="max-width:100%;height:auto;" /></p>`);
+    latestContentHtml.current = editorRef.current?.innerHTML ?? "";
+    saveEditorSelection();
+  }
+
+  async function uploadContentImage(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploadingContentImage(true);
+    setNotice("");
+    setError("");
+
+    const data = new FormData();
+    data.set("image", file);
+
+    try {
+      const response = await fetch("/api/admin/publications/upload", {
+        method: "POST",
+        body: data,
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success)
+        throw new Error(result.message ?? "Gagal upload gambar content");
+      insertEditorImage(result.data.url);
+      setNotice("Gambar berhasil dimasukkan ke content");
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : "Gagal upload gambar content",
+      );
+    } finally {
+      setUploadingContentImage(false);
+      event.target.value = "";
+    }
   }
 
   async function uploadThumbnail(event: ChangeEvent<HTMLInputElement>) {
@@ -377,12 +442,20 @@ export function PublicationForm({
           </div>
 
           <RichTextEditor
+            contentImageInputRef={contentImageInputRef}
             editorRef={editorRef}
             initialValue={initialContentHtml.current}
             onChange={(value) => {
               latestContentHtml.current = value;
             }}
             onCommand={runEditorCommand}
+            onImageBrowse={() => {
+              saveEditorSelection();
+              contentImageInputRef.current?.click();
+            }}
+            onImageSelected={uploadContentImage}
+            onSelectionChange={saveEditorSelection}
+            uploadingImage={uploadingContentImage}
           />
         </div>
       </section>
@@ -470,20 +543,37 @@ function Field({
 }
 
 function RichTextEditor({
+  contentImageInputRef,
   editorRef,
   initialValue,
   onChange,
   onCommand,
+  onImageBrowse,
+  onImageSelected,
+  onSelectionChange,
+  uploadingImage,
 }: {
+  contentImageInputRef: RefObject<HTMLInputElement | null>;
   editorRef: RefObject<HTMLDivElement | null>;
   initialValue: string;
   onChange: (value: string) => void;
   onCommand: (command: string) => void;
+  onImageBrowse: () => void;
+  onImageSelected: (event: ChangeEvent<HTMLInputElement>) => void;
+  onSelectionChange: () => void;
+  uploadingImage: boolean;
 }) {
   return (
-    <label className="grid gap-2 text-sm font-semibold text-slate-700">
-      Content
+    <div className="grid gap-2 text-sm font-semibold text-slate-700">
+      <p>Content</p>
       <div className="overflow-hidden rounded-md border border-slate-300">
+        <input
+          ref={contentImageInputRef}
+          className="sr-only"
+          type="file"
+          accept="image/*"
+          onChange={onImageSelected}
+        />
         <div className="flex flex-wrap gap-1 border-b border-slate-200 bg-slate-50 p-2">
           <ToolbarButton label="Bold" onClick={() => onCommand("bold")}>
             <Bold size={16} />
@@ -503,17 +593,54 @@ function RichTextEditor({
           >
             <ListOrdered size={16} />
           </ToolbarButton>
+          <ToolbarButton
+            label="Align left"
+            onClick={() => onCommand("justifyLeft")}
+          >
+            <AlignLeft size={16} />
+          </ToolbarButton>
+          <ToolbarButton
+            label="Align center"
+            onClick={() => onCommand("justifyCenter")}
+          >
+            <AlignCenter size={16} />
+          </ToolbarButton>
+          <ToolbarButton
+            label="Align right"
+            onClick={() => onCommand("justifyRight")}
+          >
+            <AlignRight size={16} />
+          </ToolbarButton>
+          <ToolbarButton
+            label="Justify"
+            onClick={() => onCommand("justifyFull")}
+          >
+            <AlignJustify size={16} />
+          </ToolbarButton>
+          <ToolbarButton
+            label="Insert image"
+            onClick={onImageBrowse}
+            disabled={uploadingImage}
+          >
+            {uploadingImage ? (
+              <Loader2 className="animate-spin" size={16} />
+            ) : (
+              <ImageIcon size={16} />
+            )}
+          </ToolbarButton>
         </div>
         <div
           ref={editorRef}
-          className="min-h-72 px-3 py-2 text-sm font-normal leading-6 outline-none focus:ring-2 focus:ring-sky-100"
+          className="min-h-72 px-3 py-2 text-sm font-normal leading-6 outline-none focus:ring-2 focus:ring-sky-100 [&_img]:my-3 [&_img]:max-w-full [&_img]:rounded-md"
           contentEditable
           suppressContentEditableWarning
           dangerouslySetInnerHTML={{ __html: initialValue }}
           onInput={(event) => onChange(event.currentTarget.innerHTML)}
+          onKeyUp={onSelectionChange}
+          onMouseUp={onSelectionChange}
         />
       </div>
-    </label>
+    </div>
   );
 }
 
@@ -521,17 +648,21 @@ function ToolbarButton({
   label,
   onClick,
   children,
+  disabled,
 }: {
   label: string;
   onClick: () => void;
   children: ReactNode;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       title={label}
+      disabled={disabled}
+      onMouseDown={(event) => event.preventDefault()}
       onClick={onClick}
-      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
+      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 disabled:opacity-50"
     >
       {children}
     </button>
