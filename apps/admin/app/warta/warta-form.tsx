@@ -26,7 +26,7 @@ export function WartaForm({ initialItem }: { initialItem?: Warta }) {
   async function save(event: FormEvent) {
     event.preventDefault(); setSaving(true); setNotice(""); setError("");
     const payload = { ...form, slug: toSlug(form.slug || form.title), date: new Date(form.date).toISOString(), pdfVersions: form.pdfVersions.filter((pdf) => pdf.fileUrl && pdf.fileName) };
-    try { const response = await fetch(isEdit ? `/api/admin/warta/${initialItem?.id}` : "/api/admin/warta", { method: isEdit ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); const result = await response.json(); if (!response.ok || !result.success) throw new Error(result.message ?? "Gagal menyimpan warta"); setNotice(result.message); if (!isEdit) router.replace(`/warta/${result.data.id}`); router.refresh(); }
+    try { const response = await fetch(isEdit ? `/api/admin/warta/${initialItem?.id}` : "/api/admin/warta", { method: isEdit ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); const result = await response.json(); if (!response.ok || !result.success) throw new Error(result.message ?? "Gagal menyimpan warta"); setNotice(result.message); router.replace("/warta"); router.refresh(); }
     catch (saveError) { setError(saveError instanceof Error ? saveError.message : "Gagal menyimpan warta"); }
     finally { setSaving(false); }
   }

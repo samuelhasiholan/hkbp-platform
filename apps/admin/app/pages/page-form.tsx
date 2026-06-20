@@ -142,7 +142,7 @@ export function PageForm({ initialPage }: { initialPage?: PageItem }) {
       if (!response.ok || !result.success) throw new Error(result.message ?? "Gagal menyimpan halaman");
 
       setMessage(result.message ?? "Halaman tersimpan");
-      if (!isEdit) router.replace(`/pages/${result.data.id}`);
+      router.replace("/pages");
       router.refresh();
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Gagal menyimpan halaman");

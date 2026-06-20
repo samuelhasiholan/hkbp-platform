@@ -80,7 +80,7 @@ export function GalleryForm({ initialItem }: { initialItem?: Gallery }) {
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.message ?? "Gagal menyimpan galeri");
       setNotice(result.message);
-      if (!isEdit) router.replace(`/gallery/${result.data.id}`);
+      router.replace("/gallery");
       router.refresh();
     } catch (error) {
       setError(error instanceof Error ? error.message : "Gagal menyimpan galeri");
