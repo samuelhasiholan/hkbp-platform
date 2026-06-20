@@ -1,19 +1,180 @@
 "use client";
-import { FilePlus2, Loader2, RefreshCcw, Save, Search, Trash2 } from "lucide-react";
+
+import { ChevronLeft, ChevronRight, Edit, FilePlus2, Loader2, RefreshCcw, Search } from "lucide-react";
+import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
-type Status="DRAFT"|"PUBLISHED"|"ARCHIVED";
-type Gallery={id:string;title:string|null;description:string|null;category:string|null;eventDate:string|null;sortOrder:number;status:Status;media:{url:string;fileName:string;mimeType:string;altText:string|null}};
-type FormState={title:string;imageUrl:string;fileName:string;mimeType:string;altText:string;description:string;category:string;eventDate:string;sortOrder:number;status:Status};
-const empty:FormState={title:"",imageUrl:"",fileName:"",mimeType:"image/*",altText:"",description:"",category:"",eventDate:"",sortOrder:0,status:"DRAFT"};
-const toForm=(i:Gallery):FormState=>({title:i.title??"",imageUrl:i.media.url,fileName:i.media.fileName,mimeType:i.media.mimeType,altText:i.media.altText??"",description:i.description??"",category:i.category??"",eventDate:i.eventDate?i.eventDate.slice(0,10):"",sortOrder:i.sortOrder,status:i.status});
-export function GalleryClient(){const[items,setItems]=useState<Gallery[]>([]);const[selectedId,setSelectedId]=useState<string|null>(null);const[form,setForm]=useState<FormState>(empty);const[search,setSearch]=useState("");const[status,setStatus]=useState("ALL");const[loading,setLoading]=useState(true);const[saving,setSaving]=useState(false);const[notice,setNotice]=useState("");const[error,setError]=useState("");const selected=useMemo(()=>items.find(i=>i.id===selectedId)??null,[items,selectedId]);
-async function load(){setLoading(true);const p=new URLSearchParams({limit:"50"});if(search.trim())p.set("search",search.trim());if(status!=="ALL")p.set("status",status);try{const r=await fetch(`/api/admin/gallery?${p}`,{cache:"no-store"});const j=await r.json();if(!r.ok||!j.success)throw new Error(j.message??"Gagal memuat galeri");setItems(j.data)}catch(e){setError(e instanceof Error?e.message:"Gagal memuat galeri")}finally{setLoading(false)}}useEffect(()=>{load()},[]);
-function update<K extends keyof FormState>(k:K,v:FormState[K]){setForm(c=>({...c,[k]:v}))}function createNew(){setSelectedId(null);setForm(empty);setNotice("");setError("")}function select(i:Gallery){setSelectedId(i.id);setForm(toForm(i));setNotice("");setError("")}
-async function save(e:FormEvent){e.preventDefault();setSaving(true);setNotice("");setError("");const payload={...form,eventDate:form.eventDate?new Date(form.eventDate).toISOString():null};try{const r=await fetch(selectedId?`/api/admin/gallery/${selectedId}`:"/api/admin/gallery",{method:selectedId?"PATCH":"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});const j=await r.json();if(!r.ok||!j.success)throw new Error(j.message??"Gagal menyimpan galeri");setSelectedId(j.data.id);setForm(toForm(j.data));setNotice(j.message);await load()}catch(e){setError(e instanceof Error?e.message:"Gagal menyimpan galeri")}finally{setSaving(false)}}
-async function remove(){if(!selectedId||!selected||!confirm(`Hapus item galeri "${selected.title??selected.media.fileName}"?`))return;setSaving(true);try{const r=await fetch(`/api/admin/gallery/${selectedId}`,{method:"DELETE"});const j=await r.json();if(!r.ok||!j.success)throw new Error(j.message);createNew();setNotice("Item galeri dihapus");await load()}catch(e){setError(e instanceof Error?e.message:"Gagal menghapus galeri")}finally{setSaving(false)}}
-return <div className="grid gap-6 py-6 xl:grid-cols-[0.95fr_1.3fr]"><section className="rounded-md border border-slate-200 bg-white shadow-sm"><div className="border-b border-slate-200 p-4"><div className="flex items-center justify-between gap-3"><div><h3 className="font-bold">Daftar Galeri</h3><p className="mt-1 text-sm text-slate-500">Simpan gambar melalui URL/path asset.</p></div><button onClick={createNew} className="inline-flex h-10 items-center gap-2 rounded-md bg-slate-950 px-3 text-sm font-bold text-white"><FilePlus2 size={17}/>Baru</button></div><form className="mt-4 grid gap-3 md:grid-cols-[1fr_150px_auto]" onSubmit={e=>{e.preventDefault();load()}}><label className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={17}/><input className="h-10 w-full rounded-md border border-slate-300 pl-10 pr-3 text-sm" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Cari galeri"/></label><select className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm" value={status} onChange={e=>setStatus(e.target.value)}><option value="ALL">Semua</option><option>DRAFT</option><option>PUBLISHED</option><option>ARCHIVED</option></select><button className="inline-flex h-10 items-center gap-2 rounded-md border border-slate-300 px-3 text-sm font-bold"><RefreshCcw size={16}/>Muat</button></form></div><div className="max-h-[calc(100vh-280px)] overflow-auto divide-y divide-slate-200">{loading?<div className="p-8 text-center text-sm text-slate-500"><Loader2 className="inline animate-spin" size={18}/> Memuat</div>:items.map(i=><button key={i.id} onClick={()=>select(i)} className={`flex w-full gap-3 p-4 text-left hover:bg-slate-50 ${i.id===selectedId?'bg-sky-50':''}`}><div className="h-16 w-20 shrink-0 overflow-hidden rounded-md bg-slate-100">{i.media.url?<img src={i.media.url} alt="" className="h-full w-full object-cover"/>:null}</div><div className="min-w-0"><div className="flex gap-2"><p className="truncate text-sm font-bold">{i.title||i.media.fileName}</p><span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-bold">{i.status}</span></div><p className="mt-1 truncate text-xs text-slate-500">{i.category||"Tanpa kategori"}</p><p className="mt-2 line-clamp-2 text-sm text-slate-600">{i.description}</p></div></button>)}</div></section><section className="rounded-md border border-slate-200 bg-white shadow-sm"><form onSubmit={save}><Header title={selectedId?"Edit Galeri":"Buat Galeri"} saving={saving} selected={Boolean(selectedId)} remove={remove}/><div className="grid gap-4 p-4">{notice?<Alert tone="good" text={notice}/>:null}{error?<Alert tone="bad" text={error}/>:null}<div className="grid gap-4 md:grid-cols-2"><Field label="Title" value={form.title} onChange={v=>update('title',v)}/><Field label="Image URL" value={form.imageUrl} onChange={v=>update('imageUrl',v)} required/><Field label="File Name" value={form.fileName} onChange={v=>update('fileName',v)}/><Field label="MIME Type" value={form.mimeType} onChange={v=>update('mimeType',v)}/><Field label="Alt Text" value={form.altText} onChange={v=>update('altText',v)}/><Field label="Category" value={form.category} onChange={v=>update('category',v)}/><Field label="Event Date" type="date" value={form.eventDate} onChange={v=>update('eventDate',v)}/><Field label="Sort Order" type="number" value={String(form.sortOrder)} onChange={v=>update('sortOrder',Number(v))}/><Select value={form.status} onChange={v=>update('status',v as Status)}/></div><Text label="Description" value={form.description} onChange={v=>update('description',v)}/></div></form></section></div>}
-function Header({title,saving,selected,remove}:{title:string;saving:boolean;selected:boolean;remove:()=>void}){return <div className="flex items-center justify-between border-b border-slate-200 p-4"><div><h3 className="font-bold">{title}</h3><p className="mt-1 text-sm text-slate-500">Upload fisik akan ditambahkan setelah adapter storage.</p></div><div className="flex gap-2">{selected?<button type="button" onClick={remove} disabled={saving} className="inline-flex h-10 items-center gap-2 rounded-md border border-red-200 px-3 text-sm font-bold text-red-700"><Trash2 size={16}/>Hapus</button>:null}<button disabled={saving} className="inline-flex h-10 items-center gap-2 rounded-md bg-slate-950 px-3 text-sm font-bold text-white">{saving?<Loader2 className="animate-spin" size={16}/>:<Save size={16}/>}Simpan</button></div></div>}
-function Field({label,value,onChange,type='text',required}:{label:string;value:string;onChange:(v:string)=>void;type?:string;required?:boolean}){return <label className="grid gap-2 text-sm font-semibold text-slate-700">{label}<input required={required} className="h-10 rounded-md border border-slate-300 px-3 text-sm" type={type} value={value} onChange={e=>onChange(e.target.value)}/></label>}
-function Text({label,value,onChange}:{label:string;value:string;onChange:(v:string)=>void}){return <label className="grid gap-2 text-sm font-semibold text-slate-700">{label}<textarea rows={4} className="rounded-md border border-slate-300 px-3 py-2 text-sm leading-6" value={value} onChange={e=>onChange(e.target.value)}/></label>}
-function Select({value,onChange}:{value:string;onChange:(v:string)=>void}){return <label className="grid gap-2 text-sm font-semibold text-slate-700">Status<select className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm" value={value} onChange={e=>onChange(e.target.value)}><option>DRAFT</option><option>PUBLISHED</option><option>ARCHIVED</option></select></label>}
-function Alert({tone,text}:{tone:'good'|'bad';text:string}){return <div className={`rounded-md border px-3 py-2 text-sm ${tone==='good'?'border-emerald-200 bg-emerald-50 text-emerald-700':'border-red-200 bg-red-50 text-red-700'}`}>{text}</div>}
+
+type Status = "DRAFT" | "PUBLISHED" | "ARCHIVED";
+type Gallery = {
+  id: string;
+  description: string;
+  status: Status;
+  updatedAt: string;
+  media: { url: string };
+};
+type Meta = { page: number; limit: number; total: number };
+
+export function GalleryClient() {
+  const [items, setItems] = useState<Gallery[]>([]);
+  const [meta, setMeta] = useState<Meta>({ page: 1, limit: 10, total: 0 });
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("ALL");
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const totalPages = useMemo(() => Math.max(Math.ceil(meta.total / meta.limit), 1), [meta]);
+
+  async function load(next = page) {
+    setLoading(true);
+    setError("");
+
+    const params = new URLSearchParams({ page: String(next), limit: "10" });
+    if (search.trim()) params.set("search", search.trim());
+    if (status !== "ALL") params.set("status", status);
+
+    try {
+      const response = await fetch(`/api/admin/gallery?${params}`, { cache: "no-store" });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.message ?? "Gagal memuat galeri");
+      setItems(result.data);
+      setMeta(result.meta);
+      setPage(next);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Gagal memuat galeri");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    load(1);
+  }, []);
+
+  function submit(event: FormEvent) {
+    event.preventDefault();
+    load(1);
+  }
+
+  function go(nextPage: number) {
+    const next = Math.min(Math.max(nextPage, 1), totalPages);
+    if (next !== page) load(next);
+  }
+
+  return (
+    <div className="py-6">
+      <section className="rounded-md border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-200 p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 className="font-bold">Daftar Galeri</h3>
+              <p className="mt-1 text-sm text-slate-500">10 data per halaman. Buka detail untuk read/update.</p>
+            </div>
+            <Link href="/gallery/new" className="inline-flex h-10 items-center gap-2 rounded-md bg-slate-950 px-3 text-sm font-bold text-white">
+              <FilePlus2 size={17} />
+              Buat Galeri
+            </Link>
+          </div>
+
+          <form className="mt-4 grid gap-3 md:grid-cols-[1fr_160px_auto]" onSubmit={submit}>
+            <label className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
+              <input className="h-10 w-full rounded-md border border-slate-300 pl-10 pr-3 text-sm" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Cari deskripsi atau URL gambar" />
+            </label>
+            <select className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm" value={status} onChange={(event) => setStatus(event.target.value)}>
+              <option value="ALL">Semua status</option>
+              <option>DRAFT</option>
+              <option>PUBLISHED</option>
+              <option>ARCHIVED</option>
+            </select>
+            <button className="inline-flex h-10 items-center gap-2 rounded-md border border-slate-300 px-3 text-sm font-bold">
+              <RefreshCcw size={16} />
+              Muat
+            </button>
+          </form>
+        </div>
+
+        {error ? <div className="m-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div> : null}
+
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[900px] text-sm">
+            <thead className="bg-slate-50 text-left text-xs font-bold uppercase tracking-wide text-slate-500">
+              <tr>
+                <th className="border-b px-4 py-3">Image</th>
+                <th className="border-b px-4 py-3">Description</th>
+                <th className="border-b px-4 py-3">Image URL</th>
+                <th className="border-b px-4 py-3">Status</th>
+                <th className="border-b px-4 py-3 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {loading ? (
+                <tr>
+                  <td className="px-4 py-12 text-center text-slate-500" colSpan={5}>
+                    <Loader2 className="mr-2 inline animate-spin" size={18} />
+                    Memuat
+                  </td>
+                </tr>
+              ) : items.length ? (
+                items.map((item) => (
+                  <tr key={item.id} className="hover:bg-slate-50">
+                    <td className="px-4 py-3">
+                      <div className="h-14 w-20 overflow-hidden rounded-md bg-slate-100">
+                        {item.media.url ? <img src={item.media.url} alt="" className="h-full w-full object-cover" /> : null}
+                      </div>
+                    </td>
+                    <td className="max-w-sm px-4 py-3">
+                      <p className="line-clamp-2 font-semibold leading-6">{item.description}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="max-w-xs truncate text-xs text-slate-500">{item.media.url}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-bold">{item.status}</span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <Link className="inline-flex h-9 items-center gap-2 rounded-md border px-3 text-xs font-bold" href={`/gallery/${item.id}`}>
+                        <Edit size={15} />
+                        Buka
+                      </Link>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td className="px-4 py-12 text-center text-slate-500" colSpan={5}>
+                    Tidak ada data.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <Pager page={page} totalPages={totalPages} meta={meta} count={items.length} go={go} loading={loading} />
+      </section>
+    </div>
+  );
+}
+
+function Pager({ page, totalPages, meta, count, go, loading }: { page: number; totalPages: number; meta: Meta; count: number; go: (nextPage: number) => void; loading: boolean }) {
+  return (
+    <div className="flex flex-col gap-3 border-t p-4 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-sm text-slate-500">
+        Menampilkan {count ? (page - 1) * meta.limit + 1 : 0}-{Math.min(page * meta.limit, meta.total)} dari {meta.total} data
+      </p>
+      <div className="flex items-center gap-2">
+        <button disabled={page <= 1 || loading} onClick={() => go(page - 1)} className="inline-flex h-9 items-center gap-2 rounded-md border px-3 text-sm font-bold disabled:opacity-50">
+          <ChevronLeft size={16} />
+          Prev
+        </button>
+        <span className="min-w-24 text-center text-sm font-bold">
+          {page} / {totalPages}
+        </span>
+        <button disabled={page >= totalPages || loading} onClick={() => go(page + 1)} className="inline-flex h-9 items-center gap-2 rounded-md border px-3 text-sm font-bold disabled:opacity-50">
+          Next
+          <ChevronRight size={16} />
+        </button>
+      </div>
+    </div>
+  );
+}

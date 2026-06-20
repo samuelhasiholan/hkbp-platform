@@ -132,17 +132,14 @@ async function seedWarta() {
 async function seedSiteContent() {
   const module = (await importFrontend("app/_data/site-content.ts")) as { pageContent: Record<string, PageContent> };
   const gallery = module.pageContent["tentang-gereja/galeri"]?.galleryImages ?? [];
-  for (const [index, image] of gallery.entries()) {
+  for (const image of gallery) {
     const existing = await prisma.galleryItem.findFirst({ where: { media: { url: image.src }, deletedAt: null } });
     if (existing) continue;
     await prisma.galleryItem.create({
       data: {
-        title: image.alt,
         description: image.description,
-        category: "Tentang Gereja",
-        sortOrder: index,
         status: "PUBLISHED",
-        media: { create: { type: "IMAGE", url: image.src, fileName: image.src.split("/").pop()?.split("?")[0] || `gallery-${index + 1}`, mimeType: "image/*", sizeBytes: 0, altText: image.alt, description: image.description } },
+        media: { create: { url: image.src } },
       },
     });
   }
