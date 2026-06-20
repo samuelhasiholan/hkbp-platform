@@ -1,12 +1,13 @@
 "use client";
 
 import { Loader2, RefreshCcw, Save } from "lucide-react";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 
 type PastorGreeting = {
   eyebrow: string;
   title: string;
   body: string;
+  pastorProfileId: string;
   pastorName: string;
   pastorRole: string;
   photoUrl: string;
@@ -16,31 +17,70 @@ type Settings = {
   pastorGreeting: PastorGreeting;
 };
 
+type Category = {
+  id: string;
+  slug: string;
+  name: string;
+};
+
+type Profile = {
+  id: string;
+  categoryId: string | null;
+  name: string;
+  role: string;
+  photoUrl: string | null;
+  isActive: boolean;
+  category?: Category | null;
+};
+
 const emptyGreeting: PastorGreeting = {
   eyebrow: "Sambutan Pendeta",
   title: "Horas, selamat datang di HKBP Resort Srengseng Sawah",
   body: "Dengan penuh sukacita kami menyambut setiap jemaat dan pengunjung yang hadir melalui ruang digital ini. Kiranya informasi pelayanan, ibadah, dan persekutuan yang tersedia menolong kita semakin bertumbuh dalam iman, kasih, dan pengharapan di dalam Kristus.",
+  pastorProfileId: "",
   pastorName: "Pdt. HKBP Resort Srengseng Sawah",
   pastorRole: "Pendeta Resort",
   photoUrl: "",
 };
+const GREETING_BODY_MAX_LENGTH = 600;
+
+function isPastorCategory(category?: Category | null) {
+  return category?.slug === "pendeta" || category?.name.toLowerCase() === "pendeta";
+}
 
 export function SettingsClient() {
   const [form, setForm] = useState<PastorGreeting>(emptyGreeting);
-  const [loading, setLoading] = useState(true);
+  const [pastors, setPastors] = useState<Profile[]>([]);
+  const [hydrated, setHydrated] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
+
+  const selectedPastor = useMemo(() => pastors.find((pastor) => pastor.id === form.pastorProfileId) ?? null, [form.pastorProfileId, pastors]);
 
   async function loadSettings() {
     setLoading(true);
     setError("");
     try {
-      const response = await fetch("/api/admin/settings", { cache: "no-store" });
-      const result = await response.json();
-      if (!response.ok || !result.success) throw new Error(result.message ?? "Gagal memuat settings");
-      const settings = result.data as Settings;
-      setForm({ ...emptyGreeting, ...settings.pastorGreeting });
+      const [settingsResponse, profilesResponse] = await Promise.all([
+        fetch("/api/admin/settings", { cache: "no-store" }),
+        fetch("/api/admin/organization/profiles", { cache: "no-store" }),
+      ]);
+      const [settingsResult, profilesResult] = await Promise.all([settingsResponse.json(), profilesResponse.json()]);
+      if (!settingsResponse.ok || !settingsResult.success) throw new Error(settingsResult.message ?? "Gagal memuat settings");
+      if (!profilesResponse.ok || !profilesResult.success) throw new Error(profilesResult.message ?? "Gagal memuat profil organisasi");
+
+      const settings = settingsResult.data as Settings;
+      const pastorOptions = (profilesResult.data as Profile[]).filter((profile) => profile.isActive && isPastorCategory(profile.category));
+      const currentGreeting = { ...emptyGreeting, ...settings.pastorGreeting };
+      const matchedPastor = pastorOptions.find((pastor) => pastor.id === currentGreeting.pastorProfileId) ?? pastorOptions.find((pastor) => pastor.name === currentGreeting.pastorName);
+
+      setPastors(pastorOptions);
+      setForm({
+        ...currentGreeting,
+        pastorProfileId: matchedPastor?.id ?? currentGreeting.pastorProfileId,
+      });
     } catch (error) {
       setError(error instanceof Error ? error.message : "Gagal memuat settings");
     } finally {
@@ -49,6 +89,7 @@ export function SettingsClient() {
   }
 
   useEffect(() => {
+    setHydrated(true);
     loadSettings();
   }, []);
 
@@ -66,10 +107,19 @@ export function SettingsClient() {
       const response = await fetch("/api/admin/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pastorGreeting: form }),
+        body: JSON.stringify({
+          pastorGreeting: {
+            pastorProfileId: form.pastorProfileId,
+            eyebrow: form.eyebrow,
+            title: form.title,
+            body: form.body,
+          },
+        }),
       });
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.message ?? "Gagal menyimpan settings");
+      const settings = result.data as Settings;
+      setForm({ ...emptyGreeting, ...settings.pastorGreeting });
       setNotice(result.message);
     } catch (error) {
       setError(error instanceof Error ? error.message : "Gagal menyimpan settings");
@@ -91,7 +141,7 @@ export function SettingsClient() {
               {loading ? <Loader2 className="animate-spin" size={16} /> : <RefreshCcw size={16} />}
               Muat
             </button>
-            <button disabled={saving || loading} className="inline-flex h-10 items-center gap-2 rounded-md bg-slate-950 px-3 text-sm font-bold text-white disabled:opacity-50">
+            <button disabled={hydrated && (saving || loading || !form.pastorProfileId)} className="inline-flex h-10 items-center gap-2 rounded-md bg-slate-950 px-3 text-sm font-bold text-white disabled:opacity-50">
               {saving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
               Simpan
             </button>
@@ -103,17 +153,37 @@ export function SettingsClient() {
           {error ? <Alert tone="bad" text={error} /> : null}
 
           <div className="grid gap-4 md:grid-cols-2">
+            <PastorSelect value={form.pastorProfileId} pastors={pastors} onChange={(value) => update("pastorProfileId", value)} />
             <Field label="Eyebrow" value={form.eyebrow} onChange={(value) => update("eyebrow", value)} required />
-            <Field label="Nama Pendeta" value={form.pastorName} onChange={(value) => update("pastorName", value)} required />
-            <Field label="Jabatan" value={form.pastorRole} onChange={(value) => update("pastorRole", value)} required />
-            <Field label="Photo URL" value={form.photoUrl} onChange={(value) => update("photoUrl", value)} />
+            <Field label="Judul" value={form.title} onChange={(value) => update("title", value)} required />
           </div>
 
-          <Field label="Judul" value={form.title} onChange={(value) => update("title", value)} required />
-          <Text label="Isi Sambutan" value={form.body} onChange={(value) => update("body", value)} />
+          {selectedPastor ? (
+            <div className="rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-600">
+              Data jabatan dan foto akan mengikuti profil organisasi: <span className="font-semibold">{selectedPastor.role}</span>.
+            </div>
+          ) : null}
+
+          <Text label="Isi Sambutan" value={form.body} maxLength={GREETING_BODY_MAX_LENGTH} onChange={(value) => update("body", value)} />
         </div>
       </section>
     </form>
+  );
+}
+
+function PastorSelect({ value, pastors, onChange }: { value: string; pastors: Profile[]; onChange: (value: string) => void }) {
+  return (
+    <label className="grid gap-2 text-sm font-semibold text-slate-700">
+      Nama Pendeta
+      <select required className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm" value={value} onChange={(event) => onChange(event.target.value)}>
+        <option value="">{pastors.length ? "Pilih pendeta" : "Belum ada profil Pendeta aktif"}</option>
+        {pastors.map((pastor) => (
+          <option key={pastor.id} value={pastor.id}>
+            {pastor.name}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 
@@ -126,11 +196,13 @@ function Field({ label, value, onChange, required }: { label: string; value: str
   );
 }
 
-function Text({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+function Text({ label, value, onChange, maxLength }: { label: string; value: string; onChange: (value: string) => void; maxLength?: number }) {
+  const remaining = maxLength ? maxLength - value.length : null;
   return (
     <label className="grid gap-2 text-sm font-semibold text-slate-700">
       {label}
-      <textarea required rows={7} className="rounded-md border border-slate-300 px-3 py-2 text-sm leading-6" value={value} onChange={(event) => onChange(event.target.value)} />
+      <textarea required rows={7} maxLength={maxLength} className="rounded-md border border-slate-300 px-3 py-2 text-sm leading-6" value={value} onChange={(event) => onChange(event.target.value)} />
+      {remaining !== null ? <span className={`text-xs font-medium ${remaining < 60 ? "text-amber-700" : "text-slate-500"}`}>Sisa {remaining} karakter</span> : null}
     </label>
   );
 }
