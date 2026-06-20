@@ -1,10 +1,20 @@
 "use client";
 
-import { ArrowLeft, Bold, Italic, List, ListOrdered, Loader2, Save, Trash2, Upload } from "lucide-react";
+import {
+  ArrowLeft,
+  Bold,
+  Italic,
+  List,
+  ListOrdered,
+  Loader2,
+  Save,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ReactNode, RefObject } from "react";
-import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, useRef, useState } from "react";
 
 type Status = "DRAFT" | "PUBLISHED" | "ARCHIVED";
 type Category = "BERITA_KEGIATAN" | "ARTIKEL_RENUNGAN" | "PUBLIKASI_RESMI";
@@ -44,6 +54,7 @@ const categories: { value: Category; label: string }[] = [
   { value: "PUBLIKASI_RESMI", label: "Publikasi Resmi" },
 ];
 const statuses: Status[] = ["DRAFT", "PUBLISHED", "ARCHIVED"];
+const SLUG_MAX_LENGTH = 80;
 
 const emptyForm: FormState = {
   slug: "",
@@ -57,14 +68,39 @@ const emptyForm: FormState = {
   status: "DRAFT",
 };
 
-const toSlug = (value: string) =>
-  value
+const limitSlugLength = (value: string) => {
+  if (value.length <= SLUG_MAX_LENGTH) return value;
+
+  const words = value.split("-");
+  const selectedWords: string[] = [];
+  let currentLength = 0;
+
+  for (const word of words) {
+    const nextLength =
+      currentLength + word.length + (selectedWords.length ? 1 : 0);
+    if (nextLength > SLUG_MAX_LENGTH) break;
+    selectedWords.push(word);
+    currentLength = nextLength;
+  }
+
+  return (
+    selectedWords.length
+      ? selectedWords.join("-")
+      : value.slice(0, SLUG_MAX_LENGTH)
+  ).replace(/-+$/g, "");
+};
+
+const toSlug = (value: string) => {
+  const normalized = value
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9 -]/g, "")
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
+
+  return limitSlugLength(normalized);
+};
 
 const stripHtml = (value: string) =>
   value
@@ -90,12 +126,13 @@ const escapeHtml = (value: string) =>
     .replace(/'/g, "&#039;");
 
 const contentToHtml = (content: string[]) => {
-  if (content.some((item) => /<\/?[a-z][\s\S]*>/i.test(item))) return content.join("");
+  if (content.some((item) => /<\/?[a-z][\s\S]*>/i.test(item)))
+    return content.join("");
   return content.map((item) => `<p>${escapeHtml(item)}</p>`).join("");
 };
 
 const toForm = (item: Publication): FormState => ({
-  slug: item.slug,
+  slug: toSlug(item.slug),
   title: item.title,
   category: item.category,
   contentHtml: contentToHtml(item.content),
@@ -106,35 +143,44 @@ const toForm = (item: Publication): FormState => ({
   status: item.status,
 });
 
-export function PublicationForm({ initialItem, currentUserName }: { initialItem?: Publication; currentUserName: string }) {
+export function PublicationForm({
+  initialItem,
+  currentUserName,
+}: {
+  initialItem?: Publication;
+  currentUserName: string;
+}) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
-  const [form, setForm] = useState<FormState>({ ...(initialItem ? toForm(initialItem) : emptyForm), author: currentUserName });
+  const [form, setForm] = useState<FormState>({
+    ...(initialItem ? toForm(initialItem) : emptyForm),
+    author: currentUserName,
+  });
+  const initialContentHtml = useRef(form.contentHtml);
+  const latestContentHtml = useRef(form.contentHtml);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const isEdit = Boolean(initialItem);
 
-  useEffect(() => {
-    if (editorRef.current && editorRef.current.innerHTML !== form.contentHtml) {
-      editorRef.current.innerHTML = form.contentHtml;
-    }
-  }, [form.contentHtml]);
-
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
   }
 
   function updateTitle(value: string) {
-    setForm((current) => ({ ...current, title: value, slug: toSlug(value) }));
+    setForm((current) => ({
+      ...current,
+      title: value,
+      slug: toSlug(value),
+    }));
   }
 
   function runEditorCommand(command: string) {
     editorRef.current?.focus();
     document.execCommand(command);
-    update("contentHtml", editorRef.current?.innerHTML ?? "");
+    latestContentHtml.current = editorRef.current?.innerHTML ?? "";
   }
 
   async function uploadThumbnail(event: ChangeEvent<HTMLInputElement>) {
@@ -149,13 +195,19 @@ export function PublicationForm({ initialItem, currentUserName }: { initialItem?
     data.set("image", file);
 
     try {
-      const response = await fetch("/api/admin/publications/upload", { method: "POST", body: data });
+      const response = await fetch("/api/admin/publications/upload", {
+        method: "POST",
+        body: data,
+      });
       const result = await response.json();
-      if (!response.ok || !result.success) throw new Error(result.message ?? "Gagal upload thumbnail");
+      if (!response.ok || !result.success)
+        throw new Error(result.message ?? "Gagal upload thumbnail");
       update("thumbnailUrl", result.data.url);
       setNotice(result.message);
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Gagal upload thumbnail");
+      setError(
+        error instanceof Error ? error.message : "Gagal upload thumbnail",
+      );
     } finally {
       setUploading(false);
       event.target.value = "";
@@ -168,51 +220,70 @@ export function PublicationForm({ initialItem, currentUserName }: { initialItem?
     setNotice("");
     setError("");
 
-    const contentHtml = form.contentHtml.trim();
+    const contentHtml = (
+      editorRef.current?.innerHTML ?? latestContentHtml.current
+    ).trim();
     const excerpt = makeExcerpt(contentHtml);
+    const slug = toSlug(form.slug || form.title);
     const payload = {
       ...form,
-      slug: toSlug(form.title),
+      slug,
       author: currentUserName,
       excerpt,
       readTime: null,
       seoTitle: form.title,
       seoDescription: excerpt,
-      publishedAt: form.publishedAt ? new Date(form.publishedAt).toISOString() : null,
+      publishedAt: form.publishedAt
+        ? new Date(form.publishedAt).toISOString()
+        : null,
       thumbnailUrl: form.thumbnailUrl || null,
       content: contentHtml ? [contentHtml] : [],
     };
 
     try {
-      const response = await fetch(isEdit ? `/api/admin/publications/${initialItem?.id}` : "/api/admin/publications", {
-        method: isEdit ? "PATCH" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const response = await fetch(
+        isEdit
+          ? `/api/admin/publications/${initialItem?.id}`
+          : "/api/admin/publications",
+        {
+          method: isEdit ? "PATCH" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        },
+      );
       const result = await response.json();
-      if (!response.ok || !result.success) throw new Error(result.message ?? "Gagal menyimpan publikasi");
+      if (!response.ok || !result.success)
+        throw new Error(result.message ?? "Gagal menyimpan publikasi");
       setNotice(result.message);
       router.replace("/publications");
       router.refresh();
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Gagal menyimpan publikasi");
+      setError(
+        error instanceof Error ? error.message : "Gagal menyimpan publikasi",
+      );
     } finally {
       setSaving(false);
     }
   }
 
   async function remove() {
-    if (!initialItem || !confirm(`Hapus publikasi "${initialItem.title}"?`)) return;
+    if (!initialItem || !confirm(`Hapus publikasi "${initialItem.title}"?`))
+      return;
 
     setSaving(true);
     try {
-      const response = await fetch(`/api/admin/publications/${initialItem.id}`, { method: "DELETE" });
+      const response = await fetch(
+        `/api/admin/publications/${initialItem.id}`,
+        { method: "DELETE" },
+      );
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.message);
       router.replace("/publications");
       router.refresh();
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Gagal menghapus publikasi");
+      setError(
+        error instanceof Error ? error.message : "Gagal menghapus publikasi",
+      );
     } finally {
       setSaving(false);
     }
@@ -221,57 +292,120 @@ export function PublicationForm({ initialItem, currentUserName }: { initialItem?
   return (
     <form className="py-6" onSubmit={save}>
       <section className="rounded-md border border-slate-200 bg-white shadow-sm">
-        <Header title={isEdit ? "Read / Update Publikasi" : "Create Publikasi"} saving={saving} remove={isEdit ? remove : undefined} />
+        <Header
+          title={isEdit ? "Read / Update Publikasi" : "Create Publikasi"}
+          saving={saving}
+          remove={isEdit ? remove : undefined}
+        />
         <div className="grid gap-4 p-4">
           {notice ? <Alert tone="good" text={notice} /> : null}
           {error ? <Alert tone="bad" text={error} /> : null}
 
           {form.thumbnailUrl ? (
             <div className="aspect-[16/7] max-h-72 overflow-hidden rounded-md bg-slate-100">
-              <img src={form.thumbnailUrl} alt={form.title || "Thumbnail publikasi"} className="h-full w-full object-cover" />
+              <img
+                src={form.thumbnailUrl}
+                alt={form.title || "Thumbnail publikasi"}
+                className="h-full w-full object-cover"
+              />
             </div>
           ) : null}
 
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Title" value={form.title} onChange={updateTitle} required />
-            <Select label="Kategori" value={form.category} onChange={(value) => update("category", value as Category)} options={categories} />
-            <Select label="Status" value={form.status} onChange={(value) => update("status", value as Status)} options={statuses.map((status) => ({ value: status, label: status }))} />
-            <Field label="Author" value={currentUserName} onChange={() => undefined} required readOnly />
-            <Field label="Tanggal Publish" type="date" value={form.publishedAt} onChange={(value) => update("publishedAt", value)} />
+            <Field
+              label="Title"
+              value={form.title}
+              onChange={updateTitle}
+              required
+            />
+            <Select
+              label="Kategori"
+              value={form.category}
+              onChange={(value) => update("category", value as Category)}
+              options={categories}
+            />
+            <Select
+              label="Status"
+              value={form.status}
+              onChange={(value) => update("status", value as Status)}
+              options={statuses.map((status) => ({
+                value: status,
+                label: status,
+              }))}
+            />
+            <Field
+              label="Author"
+              value={currentUserName}
+              onChange={() => undefined}
+              required
+              readOnly
+            />
+            <Field
+              label="Tanggal Publish"
+              type="date"
+              value={form.publishedAt}
+              onChange={(value) => update("publishedAt", value)}
+            />
             <div className="grid gap-2 text-sm font-semibold text-slate-700">
               Thumbnail URL
-              <input ref={fileInputRef} className="sr-only" type="file" accept="image/*" onChange={uploadThumbnail} />
+              <input
+                ref={fileInputRef}
+                className="sr-only"
+                type="file"
+                accept="image/*"
+                onChange={uploadThumbnail}
+              />
               <button
                 type="button"
                 disabled={uploading}
                 onClick={() => fileInputRef.current?.click()}
                 className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-slate-300 px-3 text-sm font-bold disabled:opacity-50"
               >
-                {uploading ? <Loader2 className="animate-spin" size={16} /> : <Upload size={16} />}
+                {uploading ? (
+                  <Loader2 className="animate-spin" size={16} />
+                ) : (
+                  <Upload size={16} />
+                )}
                 Browse
               </button>
-              {form.thumbnailUrl ? <p className="truncate text-xs font-normal text-slate-500">{form.thumbnailUrl}</p> : null}
+              {form.thumbnailUrl ? (
+                <p className="truncate text-xs font-normal text-slate-500">
+                  {form.thumbnailUrl}
+                </p>
+              ) : null}
             </div>
           </div>
 
           <RichTextEditor
             editorRef={editorRef}
-            value={form.contentHtml}
-            onChange={(value) => update("contentHtml", value)}
+            initialValue={initialContentHtml.current}
+            onChange={(value) => {
+              latestContentHtml.current = value;
+            }}
             onCommand={runEditorCommand}
           />
-
         </div>
       </section>
     </form>
   );
 }
 
-function Header({ title, saving, remove }: { title: string; saving: boolean; remove?: () => void }) {
+function Header({
+  title,
+  saving,
+  remove,
+}: {
+  title: string;
+  saving: boolean;
+  remove?: () => void;
+}) {
   return (
     <div className="flex items-center justify-between border-b border-slate-200 p-4">
       <div>
-        <Link className="inline-flex items-center gap-2 text-sm font-bold text-slate-600" href="/publications">
+        <Link
+          className="inline-flex items-center gap-2 text-sm font-bold text-slate-600"
+          href="/publications"
+        >
           <ArrowLeft size={16} />
           Kembali ke daftar
         </Link>
@@ -279,13 +413,25 @@ function Header({ title, saving, remove }: { title: string; saving: boolean; rem
       </div>
       <div className="flex gap-2">
         {remove ? (
-          <button type="button" onClick={remove} disabled={saving} className="inline-flex h-10 items-center gap-2 rounded-md border border-red-200 px-3 text-sm font-bold text-red-700">
+          <button
+            type="button"
+            onClick={remove}
+            disabled={saving}
+            className="inline-flex h-10 items-center gap-2 rounded-md border border-red-200 px-3 text-sm font-bold text-red-700"
+          >
             <Trash2 size={16} />
             Hapus
           </button>
         ) : null}
-        <button disabled={saving} className="inline-flex h-10 items-center gap-2 rounded-md bg-slate-950 px-3 text-sm font-bold text-white">
-          {saving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
+        <button
+          disabled={saving}
+          className="inline-flex h-10 items-center gap-2 rounded-md bg-slate-950 px-3 text-sm font-bold text-white"
+        >
+          {saving ? (
+            <Loader2 className="animate-spin" size={16} />
+          ) : (
+            <Save size={16} />
+          )}
           Simpan
         </button>
       </div>
@@ -293,23 +439,44 @@ function Header({ title, saving, remove }: { title: string; saving: boolean; rem
   );
 }
 
-function Field({ label, value, onChange, type = "text", required, readOnly }: { label: string; value: string; onChange: (value: string) => void; type?: string; required?: boolean; readOnly?: boolean }) {
+function Field({
+  label,
+  value,
+  onChange,
+  type = "text",
+  required,
+  readOnly,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  type?: string;
+  required?: boolean;
+  readOnly?: boolean;
+}) {
   return (
     <label className="grid gap-2 text-sm font-semibold text-slate-700">
       {label}
-      <input className="h-10 rounded-md border border-slate-300 px-3 text-sm read-only:bg-slate-100 read-only:text-slate-600" type={type} value={value} required={required} readOnly={readOnly} onChange={(event) => onChange(event.target.value)} />
+      <input
+        className="h-10 rounded-md border border-slate-300 px-3 text-sm read-only:bg-slate-100 read-only:text-slate-600"
+        type={type}
+        value={value}
+        required={required}
+        readOnly={readOnly}
+        onChange={(event) => onChange(event.target.value)}
+      />
     </label>
   );
 }
 
 function RichTextEditor({
   editorRef,
-  value,
+  initialValue,
   onChange,
   onCommand,
 }: {
   editorRef: RefObject<HTMLDivElement | null>;
-  value: string;
+  initialValue: string;
   onChange: (value: string) => void;
   onCommand: (command: string) => void;
 }) {
@@ -324,10 +491,16 @@ function RichTextEditor({
           <ToolbarButton label="Italic" onClick={() => onCommand("italic")}>
             <Italic size={16} />
           </ToolbarButton>
-          <ToolbarButton label="Bullet list" onClick={() => onCommand("insertUnorderedList")}>
+          <ToolbarButton
+            label="Bullet list"
+            onClick={() => onCommand("insertUnorderedList")}
+          >
             <List size={16} />
           </ToolbarButton>
-          <ToolbarButton label="Numbered list" onClick={() => onCommand("insertOrderedList")}>
+          <ToolbarButton
+            label="Numbered list"
+            onClick={() => onCommand("insertOrderedList")}
+          >
             <ListOrdered size={16} />
           </ToolbarButton>
         </div>
@@ -335,7 +508,8 @@ function RichTextEditor({
           ref={editorRef}
           className="min-h-72 px-3 py-2 text-sm font-normal leading-6 outline-none focus:ring-2 focus:ring-sky-100"
           contentEditable
-          dangerouslySetInnerHTML={{ __html: value }}
+          suppressContentEditableWarning
+          dangerouslySetInnerHTML={{ __html: initialValue }}
           onInput={(event) => onChange(event.currentTarget.innerHTML)}
         />
       </div>
@@ -343,19 +517,46 @@ function RichTextEditor({
   );
 }
 
-function ToolbarButton({ label, onClick, children }: { label: string; onClick: () => void; children: ReactNode }) {
+function ToolbarButton({
+  label,
+  onClick,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  children: ReactNode;
+}) {
   return (
-    <button type="button" title={label} onClick={onClick} className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-100">
+    <button
+      type="button"
+      title={label}
+      onClick={onClick}
+      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
+    >
       {children}
     </button>
   );
 }
 
-function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: { value: string; label: string }[] }) {
+function Select({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+}) {
   return (
     <label className="grid gap-2 text-sm font-semibold text-slate-700">
       {label}
-      <select className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm" value={value} onChange={(event) => onChange(event.target.value)}>
+      <select
+        className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      >
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
@@ -367,5 +568,11 @@ function Select({ label, value, onChange, options }: { label: string; value: str
 }
 
 function Alert({ tone, text }: { tone: "good" | "bad"; text: string }) {
-  return <div className={`rounded-md border px-3 py-2 text-sm ${tone === "good" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-red-200 bg-red-50 text-red-700"}`}>{text}</div>;
+  return (
+    <div
+      className={`rounded-md border px-3 py-2 text-sm ${tone === "good" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-red-200 bg-red-50 text-red-700"}`}
+    >
+      {text}
+    </div>
+  );
 }

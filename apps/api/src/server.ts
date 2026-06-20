@@ -14,7 +14,7 @@ import { authRoutes } from "./routes/auth.js";
 import { healthRoutes } from "./routes/health.js";
 import { publicRoutes } from "./routes/public.js";
 
-const app = fastify({ logger: true });
+const app = fastify({ logger: true, maxParamLength: 500 });
 const port = Number(process.env.API_PORT ?? 4000);
 
 await app.register(cors, { origin: true, credentials: true });
@@ -30,7 +30,9 @@ await app.register(publicRoutes);
 
 app.setErrorHandler((error, _request, reply) => {
   app.log.error(error);
-  reply.code(500).send({ success: false, data: null, message: "Internal server error" });
+  reply
+    .code(500)
+    .send({ success: false, data: null, message: "Internal server error" });
 });
 
 await app.listen({ port, host: "0.0.0.0" });
