@@ -4,11 +4,40 @@ import { ok } from "../lib/response.js";
 
 const published = { status: "PUBLISHED" as const, deletedAt: null };
 
+async function hydrateSiteSettings(settings: Record<string, unknown>) {
+  const pastorGreeting = settings.pastorGreeting as { pastorProfileId?: string } | undefined;
+  if (!pastorGreeting?.pastorProfileId) {
+    return settings;
+  }
+
+  const pastor = await prisma.personProfile.findFirst({
+    where: {
+      id: pastorGreeting.pastorProfileId,
+      deletedAt: null,
+      isActive: true,
+    },
+  });
+
+  if (!pastor) {
+    return settings;
+  }
+
+  return {
+    ...settings,
+    pastorGreeting: {
+      ...pastorGreeting,
+      pastorName: pastor.name,
+      pastorRole: pastor.role,
+      photoUrl: pastor.photoUrl ?? "",
+    },
+  };
+}
+
 export async function publicRoutes(app: FastifyInstance) {
   app.get("/api/public/site-settings", async () => {
     const settings = await prisma.siteSetting.findMany();
     return ok(
-      Object.fromEntries(settings.map((item) => [item.key, item.value])),
+      await hydrateSiteSettings(Object.fromEntries(settings.map((item) => [item.key, item.value]))),
     );
   });
 

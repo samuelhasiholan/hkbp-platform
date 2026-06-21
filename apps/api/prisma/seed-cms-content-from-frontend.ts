@@ -28,7 +28,7 @@ const categoryMap: Record<string, PublicationCategory> = {
 };
 
 type PublicationItem = { slug: string; title: string; category: string; excerpt: string; date: string; author: string; readTime: string; thumbnailTone: string; content: string[] };
-type WartaItem = { slug: string; title: string; date: string; liturgicalColor: string; theme: string; preacher: string; excerpt: string; pdfVersions: { language: "indonesia" | "batak"; label: string; fileUrl: string; fileName: string }[] };
+type WartaItem = { slug: string; title: string; date: string; pdfVersions: { language: "indonesia" | "batak"; label: string; fileUrl: string; fileName: string }[] };
 type PageContent = {
   title: string;
   galleryImages?: { src: string; alt: string; description: string }[];
@@ -101,10 +101,6 @@ async function seedWarta() {
       update: {
         title: item.title,
         date: parseIndonesianDate(item.date),
-        liturgicalColor: item.liturgicalColor,
-        theme: item.theme,
-        preacher: item.preacher,
-        excerpt: item.excerpt,
         isCurrent,
         status: "PUBLISHED",
         deletedAt: null,
@@ -117,10 +113,6 @@ async function seedWarta() {
         slug: item.slug,
         title: item.title,
         date: parseIndonesianDate(item.date),
-        liturgicalColor: item.liturgicalColor,
-        theme: item.theme,
-        preacher: item.preacher,
-        excerpt: item.excerpt,
         isCurrent,
         status: "PUBLISHED",
         pdfVersions: { create: item.pdfVersions.map((pdf) => ({ language: pdf.language === "indonesia" ? "INDONESIA" : "BATAK", label: pdf.label, fileUrl: pdf.fileUrl, fileName: pdf.fileName })) },

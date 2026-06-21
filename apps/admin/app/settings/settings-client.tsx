@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, RefreshCcw, Save } from "lucide-react";
+import { Loader2, Plus, RefreshCcw, Save, Trash2 } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
 type PastorGreeting = {
@@ -15,6 +15,12 @@ type PastorGreeting = {
 
 type Settings = {
   pastorGreeting: PastorGreeting;
+  churchHistoryTimeline: HistoryTimelineItem[];
+};
+
+type HistoryTimelineItem = {
+  year: string;
+  title: string;
 };
 
 type Category = {
@@ -43,6 +49,12 @@ const emptyGreeting: PastorGreeting = {
   photoUrl: "",
 };
 const GREETING_BODY_MAX_LENGTH = 600;
+const defaultTimeline: HistoryTimelineItem[] = [
+  { year: "1966", title: "HKBP Srengseng Sawah didirikan" },
+  { year: "2016", title: "Jubileum 50 tahun" },
+  { year: "2017", title: "Peresmian gedung gereja baru" },
+  { year: "2026", title: "Pembangunan gereja tahap 1" },
+];
 
 function isPastorCategory(category?: Category | null) {
   return category?.slug === "pendeta" || category?.name.toLowerCase() === "pendeta";
@@ -50,6 +62,7 @@ function isPastorCategory(category?: Category | null) {
 
 export function SettingsClient() {
   const [form, setForm] = useState<PastorGreeting>(emptyGreeting);
+  const [timeline, setTimeline] = useState<HistoryTimelineItem[]>(defaultTimeline);
   const [pastors, setPastors] = useState<Profile[]>([]);
   const [hydrated, setHydrated] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -77,6 +90,7 @@ export function SettingsClient() {
       const matchedPastor = pastorOptions.find((pastor) => pastor.id === currentGreeting.pastorProfileId) ?? pastorOptions.find((pastor) => pastor.name === currentGreeting.pastorName);
 
       setPastors(pastorOptions);
+      setTimeline(settings.churchHistoryTimeline?.length ? settings.churchHistoryTimeline : defaultTimeline);
       setForm({
         ...currentGreeting,
         pastorProfileId: matchedPastor?.id ?? currentGreeting.pastorProfileId,
@@ -97,6 +111,18 @@ export function SettingsClient() {
     setForm((current) => ({ ...current, [key]: value }));
   }
 
+  function updateTimeline(index: number, key: keyof HistoryTimelineItem, value: string) {
+    setTimeline((current) => current.map((item, itemIndex) => (itemIndex === index ? { ...item, [key]: value } : item)));
+  }
+
+  function addTimelineItem() {
+    setTimeline((current) => [...current, { year: "", title: "" }]);
+  }
+
+  function removeTimelineItem(index: number) {
+    setTimeline((current) => current.filter((_, itemIndex) => itemIndex !== index));
+  }
+
   async function save(event: FormEvent) {
     event.preventDefault();
     setSaving(true);
@@ -114,12 +140,14 @@ export function SettingsClient() {
             title: form.title,
             body: form.body,
           },
+          churchHistoryTimeline: timeline.map((item) => ({ year: item.year.trim(), title: item.title.trim() })).filter((item) => item.year && item.title),
         }),
       });
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.message ?? "Gagal menyimpan settings");
       const settings = result.data as Settings;
       setForm({ ...emptyGreeting, ...settings.pastorGreeting });
+      setTimeline(settings.churchHistoryTimeline?.length ? settings.churchHistoryTimeline : defaultTimeline);
       setNotice(result.message);
     } catch (error) {
       setError(error instanceof Error ? error.message : "Gagal menyimpan settings");
@@ -129,7 +157,7 @@ export function SettingsClient() {
   }
 
   return (
-    <form className="py-6" onSubmit={save}>
+    <form className="grid gap-6 py-6" onSubmit={save}>
       <section className="rounded-md border border-slate-200 bg-white shadow-sm">
         <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -173,6 +201,32 @@ export function SettingsClient() {
           ) : null}
 
           <Text label="Isi Sambutan" value={form.body} maxLength={GREETING_BODY_MAX_LENGTH} onChange={(value) => update("body", value)} />
+        </div>
+      </section>
+
+      <section className="rounded-md border border-slate-200 bg-white shadow-sm">
+        <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="font-bold">Timeline Sejarah Gereja</h3>
+            <p className="mt-1 text-sm text-slate-500">Konten ini tampil di bawah Sambutan Pendeta pada halaman Beranda.</p>
+          </div>
+          <button type="button" onClick={addTimelineItem} className="inline-flex h-10 items-center gap-2 rounded-md border border-slate-300 px-3 text-sm font-bold">
+            <Plus size={16} />
+            Tambah
+          </button>
+        </div>
+
+        <div className="grid gap-3 p-4">
+          {timeline.map((item, index) => (
+            <div key={index} className="grid gap-3 rounded-md border border-slate-200 p-3 md:grid-cols-[120px_1fr_auto] md:items-end">
+              <Field label="Tahun" value={item.year} onChange={(value) => updateTimeline(index, "year", value)} required />
+              <Field label="Peristiwa" value={item.title} onChange={(value) => updateTimeline(index, "title", value)} required />
+              <button type="button" disabled={timeline.length <= 1} onClick={() => removeTimelineItem(index)} className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-red-200 px-3 text-sm font-bold text-red-700 disabled:opacity-40">
+                <Trash2 size={16} />
+                Hapus
+              </button>
+            </div>
+          ))}
         </div>
       </section>
     </form>

@@ -10,7 +10,7 @@ type Status = "DRAFT" | "PUBLISHED" | "ARCHIVED";
 type ListResult<T> = { success: boolean; data: T[]; meta?: { total?: number } };
 type PageItem = { id: string; title: string; slug: string; status: Status; updatedAt?: string; description?: string };
 type PublicationItem = { id: string; title: string; slug: string; status: Status; updatedAt?: string; publishedAt?: string | null; author: string };
-type WartaItem = { id: string; title: string; slug: string; status: Status; isCurrent: boolean; date: string; theme: string; updatedAt?: string };
+type WartaItem = { id: string; title: string; slug: string; status: Status; isCurrent: boolean; date: string; updatedAt?: string };
 type GalleryItem = { id: string; description: string; status: Status; updatedAt?: string };
 type ProfileItem = { id: string; name: string; isActive: boolean };
 type WijkItem = { id: string; name: string };
@@ -123,7 +123,7 @@ export default async function AdminHomePage() {
             {activeWarta ? (
               <div className="mt-4">
                 <p className="font-bold leading-6">{activeWarta.title}</p>
-                <p className="mt-1 text-sm text-slate-500">{formatDate(activeWarta.date)} · {activeWarta.theme}</p>
+                <p className="mt-1 text-sm text-slate-500">{formatDate(activeWarta.date)}</p>
                 <Link href={`/warta/${activeWarta.id}`} className="mt-4 inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 px-3 text-sm font-bold">
                   Buka <ArrowRight size={15} />
                 </Link>

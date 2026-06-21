@@ -64,10 +64,6 @@ async function main() {
       slug: "warta-mingguan-21-juni-2026",
       title: "Warta Mingguan 21 Juni 2026",
       date: new Date("2026-06-21T00:00:00.000Z"),
-      liturgicalColor: "Hijau",
-      theme: "Bertumbuh dalam Kasih dan Kesetiaan",
-      preacher: "Pdt. Resort",
-      excerpt: "Sample warta minggu berjalan berisi tata ibadah, pengumuman pelayanan, jadwal kategorial, dan pokok doa jemaat.",
       isCurrent: true,
       status: "PUBLISHED",
       pdfVersions: {

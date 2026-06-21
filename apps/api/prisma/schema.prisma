@@ -191,10 +191,6 @@ model Warta {
   slug            String        @unique
   title           String
   date            DateTime
-  liturgicalColor String
-  theme           String
-  preacher        String
-  excerpt         String
   isCurrent       Boolean       @default(false)
   status          ContentStatus @default(DRAFT)
   pdfVersions     WartaPdf[]
