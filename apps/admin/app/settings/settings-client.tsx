@@ -14,8 +14,54 @@ type PastorGreeting = {
 };
 
 type Settings = {
+  siteIdentity: SiteIdentity;
+  contactInfo: ContactInfo;
+  socialLinks: SocialLink[];
+  seoDefaults: SeoDefaults;
+  footerSettings: FooterSettings;
+  homeHero: HomeHero;
   pastorGreeting: PastorGreeting;
   churchHistoryTimeline: HistoryTimelineItem[];
+};
+
+type SiteIdentity = {
+  siteName: string;
+  denomination: string;
+  logoUrl: string;
+};
+
+type ContactInfo = {
+  address: string;
+  phone: string;
+  whatsapp: string;
+  email: string;
+  officeHours: string;
+};
+
+type SocialLink = {
+  label: string;
+  url: string;
+};
+
+type SeoDefaults = {
+  title: string;
+  description: string;
+  ogImageUrl: string;
+};
+
+type FooterSettings = {
+  description: string;
+  copyrightText: string;
+};
+
+type HomeHero = {
+  eyebrow: string;
+  title: string;
+  description: string;
+  primaryLabel: string;
+  primaryHref: string;
+  secondaryLabel: string;
+  secondaryHref: string;
 };
 
 type HistoryTimelineItem = {
@@ -48,6 +94,36 @@ const emptyGreeting: PastorGreeting = {
   pastorRole: "Pendeta Resort",
   photoUrl: "",
 };
+const defaultSiteIdentity: SiteIdentity = {
+  siteName: "HKBP Resort Srengseng Sawah",
+  denomination: "Huria Kristen Batak Protestan",
+  logoUrl: "",
+};
+const defaultContactInfo: ContactInfo = {
+  address: "Gg. Amalia Jl. Srengseng Sawah No.4, RT.3/RW.3, Srengseng Sawah, Kec. Jagakarsa, Kota Jakarta Selatan, Daerah Khusus Ibukota Jakarta 12630",
+  phone: "08xx-xxxx-xxxx",
+  whatsapp: "",
+  email: "admin@hkbp.or.id",
+  officeHours: "Senin - Sabtu, 09.00 - 16.00 WIB",
+};
+const defaultSeoDefaults: SeoDefaults = {
+  title: "HKBP Resort Srengseng Sawah",
+  description: "Website HKBP Resort Srengseng Sawah untuk informasi ibadah, organisasi, warta, berita, dan kontak gereja.",
+  ogImageUrl: "",
+};
+const defaultFooterSettings: FooterSettings = {
+  description: "Website jemaat untuk informasi ibadah, organisasi, warta, berita, dan pelayanan gereja.",
+  copyrightText: "",
+};
+const defaultHomeHero: HomeHero = {
+  eyebrow: "Website Resmi",
+  title: "HKBP Resort Srengseng Sawah",
+  description: "Pusat informasi ibadah, pelayanan, organisasi, warta jemaat, berita, dan kontak gereja untuk mendukung kehidupan persekutuan.",
+  primaryLabel: "Lihat Jadwal Ibadah",
+  primaryHref: "/jadwal-pelayanan/ibadah-minggu",
+  secondaryLabel: "Baca Warta Jemaat",
+  secondaryHref: "/warta-jemaat/warta-mingguan",
+};
 const GREETING_BODY_MAX_LENGTH = 600;
 const defaultTimeline: HistoryTimelineItem[] = [
   { year: "1966", title: "HKBP Srengseng Sawah didirikan" },
@@ -62,6 +138,12 @@ function isPastorCategory(category?: Category | null) {
 }
 
 export function SettingsClient() {
+  const [siteIdentity, setSiteIdentity] = useState<SiteIdentity>(defaultSiteIdentity);
+  const [contactInfo, setContactInfo] = useState<ContactInfo>(defaultContactInfo);
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
+  const [seoDefaults, setSeoDefaults] = useState<SeoDefaults>(defaultSeoDefaults);
+  const [footerSettings, setFooterSettings] = useState<FooterSettings>(defaultFooterSettings);
+  const [homeHero, setHomeHero] = useState<HomeHero>(defaultHomeHero);
   const [form, setForm] = useState<PastorGreeting>(emptyGreeting);
   const [timeline, setTimeline] = useState<HistoryTimelineItem[]>(defaultTimeline);
   const [pastors, setPastors] = useState<Profile[]>([]);
@@ -90,6 +172,12 @@ export function SettingsClient() {
       const currentGreeting = { ...emptyGreeting, ...settings.pastorGreeting };
       const matchedPastor = pastorOptions.find((pastor) => pastor.id === currentGreeting.pastorProfileId) ?? pastorOptions.find((pastor) => pastor.name === currentGreeting.pastorName);
 
+      setSiteIdentity({ ...defaultSiteIdentity, ...settings.siteIdentity });
+      setContactInfo({ ...defaultContactInfo, ...settings.contactInfo });
+      setSocialLinks(settings.socialLinks ?? []);
+      setSeoDefaults({ ...defaultSeoDefaults, ...settings.seoDefaults });
+      setFooterSettings({ ...defaultFooterSettings, ...settings.footerSettings });
+      setHomeHero({ ...defaultHomeHero, ...settings.homeHero });
       setPastors(pastorOptions);
       setTimeline(settings.churchHistoryTimeline?.length ? settings.churchHistoryTimeline : defaultTimeline);
       setForm({
@@ -110,6 +198,38 @@ export function SettingsClient() {
 
   function update<K extends keyof PastorGreeting>(key: K, value: PastorGreeting[K]) {
     setForm((current) => ({ ...current, [key]: value }));
+  }
+
+  function updateSiteIdentity<K extends keyof SiteIdentity>(key: K, value: SiteIdentity[K]) {
+    setSiteIdentity((current) => ({ ...current, [key]: value }));
+  }
+
+  function updateContactInfo<K extends keyof ContactInfo>(key: K, value: ContactInfo[K]) {
+    setContactInfo((current) => ({ ...current, [key]: value }));
+  }
+
+  function updateSeoDefaults<K extends keyof SeoDefaults>(key: K, value: SeoDefaults[K]) {
+    setSeoDefaults((current) => ({ ...current, [key]: value }));
+  }
+
+  function updateFooterSettings<K extends keyof FooterSettings>(key: K, value: FooterSettings[K]) {
+    setFooterSettings((current) => ({ ...current, [key]: value }));
+  }
+
+  function updateHomeHero<K extends keyof HomeHero>(key: K, value: HomeHero[K]) {
+    setHomeHero((current) => ({ ...current, [key]: value }));
+  }
+
+  function updateSocialLink(index: number, key: keyof SocialLink, value: string) {
+    setSocialLinks((current) => current.map((item, itemIndex) => (itemIndex === index ? { ...item, [key]: value } : item)));
+  }
+
+  function addSocialLink() {
+    setSocialLinks((current) => [...current, { label: "", url: "" }]);
+  }
+
+  function removeSocialLink(index: number) {
+    setSocialLinks((current) => current.filter((_, itemIndex) => itemIndex !== index));
   }
 
   function updateTimeline(index: number, key: keyof HistoryTimelineItem, value: string) {
@@ -135,6 +255,12 @@ export function SettingsClient() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          siteIdentity,
+          contactInfo,
+          socialLinks: socialLinks.map((item) => ({ label: item.label.trim(), url: item.url.trim() })).filter((item) => item.label && item.url),
+          seoDefaults,
+          footerSettings,
+          homeHero,
           pastorGreeting: {
             pastorProfileId: form.pastorProfileId,
             eyebrow: form.eyebrow,
@@ -147,6 +273,12 @@ export function SettingsClient() {
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.message ?? "Gagal menyimpan settings");
       const settings = result.data as Settings;
+      setSiteIdentity({ ...defaultSiteIdentity, ...settings.siteIdentity });
+      setContactInfo({ ...defaultContactInfo, ...settings.contactInfo });
+      setSocialLinks(settings.socialLinks ?? []);
+      setSeoDefaults({ ...defaultSeoDefaults, ...settings.seoDefaults });
+      setFooterSettings({ ...defaultFooterSettings, ...settings.footerSettings });
+      setHomeHero({ ...defaultHomeHero, ...settings.homeHero });
       setForm({ ...emptyGreeting, ...settings.pastorGreeting });
       setTimeline(settings.churchHistoryTimeline?.length ? settings.churchHistoryTimeline : defaultTimeline);
       setNotice(result.message);
@@ -162,25 +294,103 @@ export function SettingsClient() {
       <section className="rounded-md border border-slate-200 bg-white shadow-sm">
         <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h3 className="font-bold">Sambutan Pendeta</h3>
-            <p className="mt-1 text-sm text-slate-500">Konten ini tampil di bawah Hero halaman Beranda.</p>
+            <h3 className="font-bold">Identitas Website</h3>
+            <p className="mt-1 text-sm text-slate-500">Nama gereja, nama sinode/organisasi, dan logo yang dipakai di header dan metadata website.</p>
           </div>
           <div className="flex gap-2">
             <button type="button" onClick={loadSettings} disabled={hydrated && (loading || saving)} className="inline-flex h-10 items-center gap-2 rounded-md border border-slate-300 px-3 text-sm font-bold disabled:opacity-50">
               {loading ? <Loader2 className="animate-spin" size={16} /> : <RefreshCcw size={16} />}
               Muat
             </button>
-            <button disabled={hydrated && (saving || loading || !form.pastorProfileId)} className="inline-flex h-10 items-center gap-2 rounded-md bg-slate-950 px-3 text-sm font-bold text-white disabled:opacity-50">
+            <button disabled={hydrated && (saving || loading)} className="inline-flex h-10 items-center gap-2 rounded-md bg-slate-950 px-3 text-sm font-bold text-white disabled:opacity-50">
               {saving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
               Simpan
             </button>
           </div>
         </div>
-
-        <div className="grid gap-4 p-4">
+        <div className="grid gap-4 p-4 md:grid-cols-2">
           {notice ? <Alert tone="good" text={notice} /> : null}
           {error ? <Alert tone="bad" text={error} /> : null}
+          <Field label="Nama Gereja / Website" value={siteIdentity.siteName} onChange={(value) => updateSiteIdentity("siteName", value)} required />
+          <Field label="Nama Sinode / Organisasi" value={siteIdentity.denomination} onChange={(value) => updateSiteIdentity("denomination", value)} required />
+          <Field label="Logo URL" value={siteIdentity.logoUrl} onChange={(value) => updateSiteIdentity("logoUrl", value)} />
+        </div>
+      </section>
 
+      <section className="rounded-md border border-slate-200 bg-white shadow-sm">
+        <SectionHeader title="Kontak & Jam Kantor" description="Informasi ini dipakai di footer dan halaman kontak." />
+        <div className="grid gap-4 p-4 md:grid-cols-2">
+          <div className="md:col-span-2">
+            <Text label="Alamat" value={contactInfo.address} onChange={(value) => updateContactInfo("address", value)} rows={4} />
+          </div>
+          <Field label="Telepon" value={contactInfo.phone} onChange={(value) => updateContactInfo("phone", value)} />
+          <Field label="WhatsApp" value={contactInfo.whatsapp} onChange={(value) => updateContactInfo("whatsapp", value)} />
+          <Field label="Email" value={contactInfo.email} onChange={(value) => updateContactInfo("email", value)} />
+          <Field label="Jam Kantor" value={contactInfo.officeHours} onChange={(value) => updateContactInfo("officeHours", value)} />
+        </div>
+      </section>
+
+      <section className="rounded-md border border-slate-200 bg-white shadow-sm">
+        <SectionHeader title="SEO Default" description="Judul dan deskripsi default untuk halaman utama website." />
+        <div className="grid gap-4 p-4">
+          <Field label="SEO Title" value={seoDefaults.title} onChange={(value) => updateSeoDefaults("title", value)} required />
+          <Text label="SEO Description" value={seoDefaults.description} onChange={(value) => updateSeoDefaults("description", value)} rows={4} />
+          <Field label="OG Image URL" value={seoDefaults.ogImageUrl} onChange={(value) => updateSeoDefaults("ogImageUrl", value)} />
+        </div>
+      </section>
+
+      <section className="rounded-md border border-slate-200 bg-white shadow-sm">
+        <SectionHeader title="Hero Beranda" description="Konten utama di bagian paling atas halaman Beranda." />
+        <div className="grid gap-4 p-4 md:grid-cols-2">
+          <Field label="Eyebrow" value={homeHero.eyebrow} onChange={(value) => updateHomeHero("eyebrow", value)} required />
+          <Field label="Judul" value={homeHero.title} onChange={(value) => updateHomeHero("title", value)} required />
+          <div className="md:col-span-2">
+            <Text label="Deskripsi" value={homeHero.description} onChange={(value) => updateHomeHero("description", value)} rows={4} />
+          </div>
+          <Field label="Primary Button Label" value={homeHero.primaryLabel} onChange={(value) => updateHomeHero("primaryLabel", value)} required />
+          <Field label="Primary Button Link" value={homeHero.primaryHref} onChange={(value) => updateHomeHero("primaryHref", value)} required />
+          <Field label="Secondary Button Label" value={homeHero.secondaryLabel} onChange={(value) => updateHomeHero("secondaryLabel", value)} required />
+          <Field label="Secondary Button Link" value={homeHero.secondaryHref} onChange={(value) => updateHomeHero("secondaryHref", value)} required />
+        </div>
+      </section>
+
+      <section className="rounded-md border border-slate-200 bg-white shadow-sm">
+        <SectionHeader title="Footer" description="Teks ringkas dan copyright di bagian bawah website." />
+        <div className="grid gap-4 p-4">
+          <Text label="Deskripsi Footer" value={footerSettings.description} onChange={(value) => updateFooterSettings("description", value)} rows={4} />
+          <Field label="Copyright Text" value={footerSettings.copyrightText} onChange={(value) => updateFooterSettings("copyrightText", value)} />
+        </div>
+      </section>
+
+      <section className="rounded-md border border-slate-200 bg-white shadow-sm">
+        <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="font-bold">Link Sosial Media</h3>
+            <p className="mt-1 text-sm text-slate-500">Link ini akan tampil di footer jika diisi.</p>
+          </div>
+          <button type="button" onClick={addSocialLink} className="inline-flex h-10 items-center gap-2 rounded-md border border-slate-300 px-3 text-sm font-bold">
+            <Plus size={16} />
+            Tambah
+          </button>
+        </div>
+        <div className="grid gap-3 p-4">
+          {socialLinks.length ? socialLinks.map((item, index) => (
+            <div key={index} className="grid gap-3 rounded-md border border-slate-200 p-3 md:grid-cols-[1fr_1.5fr_auto] md:items-end">
+              <Field label="Label" value={item.label} onChange={(value) => updateSocialLink(index, "label", value)} required />
+              <Field label="URL" value={item.url} onChange={(value) => updateSocialLink(index, "url", value)} required />
+              <button type="button" onClick={() => removeSocialLink(index)} className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-red-200 px-3 text-sm font-bold text-red-700 md:w-auto">
+                <Trash2 size={16} />
+                Hapus
+              </button>
+            </div>
+          )) : <p className="rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-500">Belum ada link sosial media.</p>}
+        </div>
+      </section>
+
+      <section className="rounded-md border border-slate-200 bg-white shadow-sm">
+        <SectionHeader title="Sambutan Pendeta" description="Konten ini tampil di bawah Hero halaman Beranda." />
+
+        <div className="grid gap-4 p-4">
           <div className="grid gap-4 md:grid-cols-2">
             <PastorSelect value={form.pastorProfileId} pastors={pastors} onChange={(value) => update("pastorProfileId", value)} />
             <Field label="Eyebrow" value={form.eyebrow} onChange={(value) => update("eyebrow", value)} required />
@@ -238,7 +448,7 @@ function PastorSelect({ value, pastors, onChange }: { value: string; pastors: Pr
   return (
     <label className="grid gap-2 text-sm font-semibold text-slate-700">
       Nama Pendeta
-      <select required className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm" value={value} onChange={(event) => onChange(event.target.value)}>
+      <select className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm" value={value} onChange={(event) => onChange(event.target.value)}>
         <option value="">{pastors.length ? "Pilih pendeta" : "Belum ada profil Pendeta aktif"}</option>
         {pastors.map((pastor) => (
           <option key={pastor.id} value={pastor.id}>
@@ -277,14 +487,23 @@ function YearField({ value, onChange, required }: { value: string; onChange: (va
   );
 }
 
-function Text({ label, value, onChange, maxLength }: { label: string; value: string; onChange: (value: string) => void; maxLength?: number }) {
+function Text({ label, value, onChange, maxLength, rows = 7 }: { label: string; value: string; onChange: (value: string) => void; maxLength?: number; rows?: number }) {
   const remaining = maxLength ? maxLength - value.length : null;
   return (
     <label className="grid gap-2 text-sm font-semibold text-slate-700">
       {label}
-      <textarea required rows={7} maxLength={maxLength} className="rounded-md border border-slate-300 px-3 py-2 text-sm leading-6" value={value} onChange={(event) => onChange(event.target.value)} />
+      <textarea required rows={rows} maxLength={maxLength} className="rounded-md border border-slate-300 px-3 py-2 text-sm leading-6" value={value} onChange={(event) => onChange(event.target.value)} />
       {remaining !== null ? <span className={`text-xs font-medium ${remaining < 60 ? "text-amber-700" : "text-slate-500"}`}>Sisa {remaining} karakter</span> : null}
     </label>
+  );
+}
+
+function SectionHeader({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="border-b border-slate-200 p-4">
+      <h3 className="font-bold">{title}</h3>
+      <p className="mt-1 text-sm text-slate-500">{description}</p>
+    </div>
   );
 }
 
