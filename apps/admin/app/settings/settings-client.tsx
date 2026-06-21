@@ -55,6 +55,7 @@ const defaultTimeline: HistoryTimelineItem[] = [
   { year: "2017", title: "Peresmian gedung gereja baru" },
   { year: "2026", title: "Pembangunan gereja tahap 1" },
 ];
+const yearOptions = Array.from({ length: 301 }, (_, index) => String(2100 - index));
 
 function isPastorCategory(category?: Category | null) {
   return category?.slug === "pendeta" || category?.name.toLowerCase() === "pendeta";
@@ -218,10 +219,10 @@ export function SettingsClient() {
 
         <div className="grid gap-3 p-4">
           {timeline.map((item, index) => (
-            <div key={index} className="grid gap-3 rounded-md border border-slate-200 p-3 md:grid-cols-[120px_1fr_auto] md:items-end">
-              <Field label="Tahun" value={item.year} onChange={(value) => updateTimeline(index, "year", value)} required />
+            <div key={index} className="grid gap-3 rounded-md border border-slate-200 p-3 md:grid-cols-[minmax(96px,120px)_minmax(0,1fr)_auto] md:items-end">
+              <YearField value={item.year} onChange={(value) => updateTimeline(index, "year", value)} required />
               <Field label="Peristiwa" value={item.title} onChange={(value) => updateTimeline(index, "title", value)} required />
-              <button type="button" disabled={timeline.length <= 1} onClick={() => removeTimelineItem(index)} className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-red-200 px-3 text-sm font-bold text-red-700 disabled:opacity-40">
+              <button type="button" disabled={timeline.length <= 1} onClick={() => removeTimelineItem(index)} className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-red-200 px-3 text-sm font-bold text-red-700 disabled:opacity-40 md:w-auto">
                 <Trash2 size={16} />
                 Hapus
               </button>
@@ -251,9 +252,27 @@ function PastorSelect({ value, pastors, onChange }: { value: string; pastors: Pr
 
 function Field({ label, value, onChange, required }: { label: string; value: string; onChange: (value: string) => void; required?: boolean }) {
   return (
-    <label className="grid gap-2 text-sm font-semibold text-slate-700">
+    <label className="grid min-w-0 gap-2 text-sm font-semibold text-slate-700">
       {label}
-      <input required={required} className="h-10 rounded-md border border-slate-300 px-3 text-sm" value={value} onChange={(event) => onChange(event.target.value)} />
+      <input required={required} className="h-10 min-w-0 rounded-md border border-slate-300 px-3 text-sm" value={value} onChange={(event) => onChange(event.target.value)} />
+    </label>
+  );
+}
+
+function YearField({ value, onChange, required }: { value: string; onChange: (value: string) => void; required?: boolean }) {
+  const normalizedValue = /^\d{4}$/.test(value) ? value : "";
+
+  return (
+    <label className="grid min-w-0 gap-2 text-sm font-semibold text-slate-700">
+      Tahun
+      <select required={required} className="h-10 min-w-0 rounded-md border border-slate-300 bg-white px-3 text-sm" value={normalizedValue} onChange={(event) => onChange(event.target.value)}>
+        <option value="">Pilih</option>
+        {yearOptions.map((year) => (
+          <option key={year} value={year}>
+            {year}
+          </option>
+        ))}
+      </select>
     </label>
   );
 }
