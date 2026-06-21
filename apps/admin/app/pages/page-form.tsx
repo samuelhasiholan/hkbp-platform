@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, CheckCircle2, Loader2, Plus, Save, Trash2, X } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2, Plus, Save, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
@@ -93,14 +93,12 @@ function cleanForm(form: PageFormState) {
   };
 }
 
-export function PageForm({ initialPage }: { initialPage?: PageItem }) {
+export function PageForm({ initialPage, backHref = "/settings?tab=pages" }: { initialPage: PageItem; backHref?: string }) {
   const router = useRouter();
   const [form, setForm] = useState<PageFormState>(initialPage ? pageToForm(initialPage) : emptyForm);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-
-  const isEdit = Boolean(initialPage);
 
   function setField<K extends keyof PageFormState>(key: K, value: PageFormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -129,8 +127,8 @@ export function PageForm({ initialPage }: { initialPage?: PageItem }) {
     const payload = cleanForm(form);
 
     try {
-      const response = await fetch(isEdit ? `/api/admin/pages/${initialPage?.id}` : "/api/admin/pages", {
-        method: isEdit ? "PATCH" : "POST",
+      const response = await fetch(`/api/admin/pages/${initialPage.id}`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
@@ -138,32 +136,10 @@ export function PageForm({ initialPage }: { initialPage?: PageItem }) {
       if (!response.ok || !result.success) throw new Error(result.message ?? "Gagal menyimpan halaman");
 
       setMessage(result.message ?? "Halaman tersimpan");
-      router.replace("/pages");
+      router.replace(backHref);
       router.refresh();
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Gagal menyimpan halaman");
-    } finally {
-      setIsSaving(false);
-    }
-  }
-
-  async function deletePage() {
-    if (!initialPage) return;
-    const confirmed = window.confirm(`Hapus halaman "${initialPage.title}"? Halaman akan diarsipkan.`);
-    if (!confirmed) return;
-
-    setIsSaving(true);
-    setError("");
-    setMessage("");
-
-    try {
-      const response = await fetch(`/api/admin/pages/${initialPage.id}`, { method: "DELETE" });
-      const result = await response.json();
-      if (!response.ok || !result.success) throw new Error(result.message ?? "Gagal menghapus halaman");
-      router.replace("/pages");
-      router.refresh();
-    } catch (deleteError) {
-      setError(deleteError instanceof Error ? deleteError.message : "Gagal menghapus halaman");
     } finally {
       setIsSaving(false);
     }
@@ -174,20 +150,14 @@ export function PageForm({ initialPage }: { initialPage?: PageItem }) {
       <section className="rounded-md border border-slate-200 bg-white shadow-sm">
         <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <Link className="inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-slate-950" href="/pages">
+            <Link className="inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-slate-950" href={backHref}>
               <ArrowLeft size={16} aria-hidden="true" />
               Kembali ke daftar
             </Link>
-            <h3 className="mt-3 text-base font-bold">{isEdit ? "Read / Update Halaman" : "Create Halaman"}</h3>
-            <p className="mt-1 text-sm text-slate-500">{isEdit ? `/${initialPage?.slug}` : "Isi konten halaman baru lalu simpan."}</p>
+            <h3 className="mt-3 text-base font-bold">Read / Update Halaman</h3>
+            <p className="mt-1 text-sm text-slate-500">/{initialPage.slug}</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            {isEdit ? (
-              <button className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-red-200 bg-white px-3 text-sm font-bold text-red-700 hover:bg-red-50" disabled={isSaving} onClick={deletePage} type="button">
-                <Trash2 size={16} aria-hidden="true" />
-                Hapus
-              </button>
-            ) : null}
             <button className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-slate-950 px-3 text-sm font-bold text-white disabled:opacity-70" disabled={isSaving} type="submit">
               {isSaving ? <Loader2 className="animate-spin" size={16} aria-hidden="true" /> : <Save size={16} aria-hidden="true" />}
               Simpan

@@ -6,7 +6,6 @@ import { SessionRefresh } from "./session-refresh";
 
 const navigation = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
-  { label: "Pages", href: "/pages", icon: FileText },
   { label: "Organization", href: "/organization", icon: Users },
   { label: "Gallery", href: "/gallery", icon: GalleryHorizontalEnd },
   { label: "Publications", href: "/publications", icon: Newspaper },

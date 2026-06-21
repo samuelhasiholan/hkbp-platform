@@ -80,7 +80,7 @@ export default async function AdminHomePage() {
   const recentItems = [
     ...publications.data.map((item) => ({ kind: "Publikasi", title: item.title, status: item.status, href: `/publications/${item.id}`, date: item.updatedAt ?? item.publishedAt })),
     ...warta.data.map((item) => ({ kind: "Warta", title: item.title, status: item.status, href: `/warta/${item.id}`, date: item.updatedAt ?? item.date })),
-    ...pages.data.map((item) => ({ kind: "Halaman", title: item.title, status: item.status, href: `/pages/${item.id}`, date: item.updatedAt })),
+    ...pages.data.map((item) => ({ kind: "Halaman", title: item.title, status: item.status, href: `/settings/pages/${item.id}`, date: item.updatedAt })),
   ]
     .sort((a, b) => new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime())
     .slice(0, 6);

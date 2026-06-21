@@ -290,7 +290,7 @@ export function SettingsClient() {
   }
 
   return (
-    <form className="grid gap-6 py-6" onSubmit={save}>
+    <form className="grid gap-6" onSubmit={save}>
       <section className="rounded-md border border-slate-200 bg-white shadow-sm">
         <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
