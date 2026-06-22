@@ -176,7 +176,7 @@ export function PageForm({ initialPage, backHref = "/settings?tab=pages" }: { in
             </label>
             <label className="grid gap-2 text-sm font-semibold text-slate-700">
               Slug
-              <input className="h-10 rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100" onChange={(event) => setField("slug", event.target.value)} placeholder="tentang-gereja/sejarah" required value={form.slug} />
+              <input className="h-10 rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100" onChange={(event) => setField("slug", event.target.value)} placeholder="tentang/sejarah" required value={form.slug} />
             </label>
             <label className="grid gap-2 text-sm font-semibold text-slate-700">
               Eyebrow

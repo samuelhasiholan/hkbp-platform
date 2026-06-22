@@ -123,7 +123,7 @@ async function seedWarta() {
 
 async function seedSiteContent() {
   const module = (await importFrontend("app/_data/site-content.ts")) as { pageContent: Record<string, PageContent> };
-  const gallery = module.pageContent["tentang-gereja/galeri"]?.galleryImages ?? [];
+  const gallery = module.pageContent["tentang/galeri"]?.galleryImages ?? [];
   for (const image of gallery) {
     const existing = await prisma.galleryItem.findFirst({ where: { media: { url: image.src }, deletedAt: null } });
     if (existing) continue;

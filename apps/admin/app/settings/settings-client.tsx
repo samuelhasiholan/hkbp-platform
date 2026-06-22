@@ -121,8 +121,8 @@ const defaultHomeHero: HomeHero = {
   description: "Pusat informasi ibadah, pelayanan, warta jemaat, berita, dan kontak gereja untuk mendukung kehidupan persekutuan.",
   primaryLabel: "Lihat Jadwal Ibadah",
   primaryHref: "/pelayanan/jadwal-pelayanan#ibadah-minggu",
-  secondaryLabel: "Baca Warta Jemaat",
-  secondaryHref: "/warta-jemaat/warta-mingguan",
+  secondaryLabel: "Baca Warta",
+  secondaryHref: "/warta/warta-mingguan",
 };
 const GREETING_BODY_MAX_LENGTH = 600;
 const defaultTimeline: HistoryTimelineItem[] = [

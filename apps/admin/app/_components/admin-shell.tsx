@@ -8,7 +8,7 @@ const navigation = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
   { label: "Pelayanan", href: "/organization", icon: Users },
   { label: "Gallery", href: "/gallery", icon: GalleryHorizontalEnd },
-  { label: "Publications", href: "/publications", icon: Newspaper },
+  { label: "Publikasi", href: "/publications", icon: Newspaper },
   { label: "Warta", href: "/warta", icon: FileText },
   { label: "Kritik & Saran", href: "/feedback", icon: Inbox },
   { label: "Schedules", href: "/schedules", icon: CalendarDays },

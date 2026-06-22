@@ -27,11 +27,11 @@ async function main() {
   });
 
   await prisma.page.upsert({
-    where: { slug: "tentang-gereja" },
+    where: { slug: "tentang" },
     update: {},
     create: {
-      slug: "tentang-gereja",
-      title: "Tentang Gereja",
+      slug: "tentang",
+      title: "Tentang",
       eyebrow: "Profil Jemaat",
       description: "Ruang pengenalan jemaat, arah pelayanan, dan dokumentasi kehidupan bergereja.",
       summary: "HKBP Resort Srengseng Sawah hadir sebagai rumah rohani yang menumbuhkan iman, persekutuan, kesaksian, dan pelayanan kasih.",

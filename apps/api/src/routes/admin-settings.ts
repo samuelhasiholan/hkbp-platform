@@ -98,8 +98,8 @@ const defaultSettings = {
     description: "Pusat informasi ibadah, pelayanan, warta jemaat, berita, dan kontak gereja untuk mendukung kehidupan persekutuan.",
     primaryLabel: "Lihat Jadwal Ibadah",
     primaryHref: "/pelayanan/jadwal-pelayanan#ibadah-minggu",
-    secondaryLabel: "Baca Warta Jemaat",
-    secondaryHref: "/warta-jemaat/warta-mingguan",
+    secondaryLabel: "Baca Warta",
+    secondaryHref: "/warta/warta-mingguan",
   },
   pastorGreeting: {
     eyebrow: "Sambutan Pendeta",

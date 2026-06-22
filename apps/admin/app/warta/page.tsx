@@ -8,7 +8,7 @@ export default async function WartaPage() {
   if (!user) redirect("/login");
 
   return (
-    <AdminShell eyebrow="Warta" title="Kelola Warta Jemaat" user={user}>
+    <AdminShell eyebrow="Warta" title="Kelola Warta" user={user}>
       <WartaClient />
     </AdminShell>
   );
