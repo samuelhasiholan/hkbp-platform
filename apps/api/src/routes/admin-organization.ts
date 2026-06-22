@@ -42,7 +42,7 @@ export async function adminOrganizationRoutes(app: FastifyInstance) {
     const parsed = categoryPayload.safeParse(request.body);
     if (!parsed.success) return reply.code(400).send({ success: false, data: null, message: "Data kategori belum valid", meta: parsed.error.flatten() });
     const item = await prisma.organizationCategory.upsert({ where: { slug: parsed.data.slug }, update: { name: parsed.data.name, description: optional(parsed.data.description), sortOrder: parsed.data.sortOrder }, create: { slug: parsed.data.slug, name: parsed.data.name, description: optional(parsed.data.description), sortOrder: parsed.data.sortOrder } });
-    return ok(item, undefined, "Kategori organisasi tersimpan");
+    return ok(item, undefined, "Kategori pelayanan tersimpan");
   });
 
   app.get("/api/admin/organization/profiles", async (request) => {
@@ -65,7 +65,7 @@ export async function adminOrganizationRoutes(app: FastifyInstance) {
     if (!parsed.success) return reply.code(400).send({ success: false, data: null, message: "Data profil belum valid", meta: parsed.error.flatten() });
     const payload = parsed.data;
     const item = await prisma.personProfile.create({ data: { categoryId: optional(payload.categoryId), name: payload.name, role: payload.role, bio: optional(payload.bio), photoUrl: optional(payload.photoUrl), servicePeriod: optional(payload.servicePeriod), sortOrder: payload.sortOrder, isActive: payload.isActive }, include: includeCategory() });
-    return reply.code(201).send(ok(item, undefined, "Profil organisasi berhasil dibuat"));
+    return reply.code(201).send(ok(item, undefined, "Profil pelayanan berhasil dibuat"));
   });
 
   app.patch("/api/admin/organization/profiles/:id", async (request, reply) => {
@@ -73,18 +73,18 @@ export async function adminOrganizationRoutes(app: FastifyInstance) {
     const parsed = profilePayload.safeParse(request.body);
     if (!parsed.success) return reply.code(400).send({ success: false, data: null, message: "Data profil belum valid", meta: parsed.error.flatten() });
     const current = await prisma.personProfile.findFirst({ where: { id, deletedAt: null } });
-    if (!current) return reply.code(404).send({ success: false, data: null, message: "Profil organisasi tidak ditemukan" });
+    if (!current) return reply.code(404).send({ success: false, data: null, message: "Profil pelayanan tidak ditemukan" });
     const payload = parsed.data;
     const item = await prisma.personProfile.update({ where: { id }, data: { categoryId: optional(payload.categoryId), name: payload.name, role: payload.role, bio: optional(payload.bio), photoUrl: optional(payload.photoUrl), servicePeriod: optional(payload.servicePeriod), sortOrder: payload.sortOrder, isActive: payload.isActive }, include: includeCategory() });
-    return ok(item, undefined, "Profil organisasi berhasil diperbarui");
+    return ok(item, undefined, "Profil pelayanan berhasil diperbarui");
   });
 
   app.delete("/api/admin/organization/profiles/:id", async (request, reply) => {
     const { id } = request.params as { id: string };
     const current = await prisma.personProfile.findFirst({ where: { id, deletedAt: null } });
-    if (!current) return reply.code(404).send({ success: false, data: null, message: "Profil organisasi tidak ditemukan" });
+    if (!current) return reply.code(404).send({ success: false, data: null, message: "Profil pelayanan tidak ditemukan" });
     await prisma.personProfile.update({ where: { id }, data: { deletedAt: new Date(), isActive: false } });
-    return ok(null, undefined, "Profil organisasi berhasil dihapus");
+    return ok(null, undefined, "Profil pelayanan berhasil dihapus");
   });
 
   app.get("/api/admin/organization/wijk", async () => {

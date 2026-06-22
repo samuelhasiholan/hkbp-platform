@@ -74,7 +74,7 @@ export default async function AdminHomePage() {
     { label: "Halaman", value: total(pages), detail: `${pages.data.filter((item) => item.status === "PUBLISHED").length} published terbaru`, icon: FileText },
     { label: "Publikasi", value: total(publications), detail: `${total(publicationDrafts)} draft menunggu`, icon: Newspaper },
     { label: "Galeri", value: total(gallery), detail: `${total(galleryDrafts)} draft gambar`, icon: Camera },
-    { label: "Organisasi", value: activeProfiles, detail: `${wijk.data.length} wijk terdata`, icon: Users },
+    { label: "Pelayanan", value: activeProfiles, detail: `${wijk.data.length} wijk terdata`, icon: Users },
   ];
 
   const recentItems = [
@@ -89,7 +89,7 @@ export default async function AdminHomePage() {
     { label: "Buat Publikasi", href: "/publications/new", icon: PenLine },
     { label: "Tambah Warta", href: "/warta/new", icon: FilePlus2 },
     { label: "Upload Galeri", href: "/gallery/new", icon: ImageIcon },
-    { label: "Kelola Profil", href: "/organization", icon: Users },
+    { label: "Kelola Pelayanan", href: "/organization", icon: Users },
   ];
 
   return (
@@ -102,7 +102,7 @@ export default async function AdminHomePage() {
                 <p className="text-sm font-semibold text-sky-700">Selamat datang, {user.name}</p>
                 <h3 className="mt-2 text-xl font-bold">Konten website hari ini</h3>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                  Ada {draftTotal} draft yang bisa ditinjau dan {publishedTotal} konten published di daftar terbaru. Fokus utama: pastikan warta aktif, publikasi terbaru, dan profil organisasi tetap rapi.
+                  Ada {draftTotal} draft yang bisa ditinjau dan {publishedTotal} konten published di daftar terbaru. Fokus utama: pastikan warta aktif, publikasi terbaru, dan profil pelayanan tetap rapi.
                 </p>
               </div>
               <div className="grid min-w-44 gap-2 rounded-md bg-slate-50 p-3 text-sm">

@@ -85,19 +85,19 @@ const defaultSettings = {
   socialLinks: [],
   seoDefaults: {
     title: "HKBP Resort Srengseng Sawah",
-    description: "Website HKBP Resort Srengseng Sawah untuk informasi ibadah, organisasi, warta, berita, dan kontak gereja.",
+    description: "Website HKBP Resort Srengseng Sawah untuk informasi ibadah, pelayanan, warta, berita, dan kontak gereja.",
     ogImageUrl: "",
   },
   footerSettings: {
-    description: "Website jemaat untuk informasi ibadah, organisasi, warta, berita, dan pelayanan gereja.",
+    description: "Website jemaat untuk informasi ibadah, warta, berita, dan pelayanan gereja.",
     copyrightText: "",
   },
   homeHero: {
     eyebrow: "Website Resmi",
     title: "HKBP Resort Srengseng Sawah",
-    description: "Pusat informasi ibadah, pelayanan, organisasi, warta jemaat, berita, dan kontak gereja untuk mendukung kehidupan persekutuan.",
+    description: "Pusat informasi ibadah, pelayanan, warta jemaat, berita, dan kontak gereja untuk mendukung kehidupan persekutuan.",
     primaryLabel: "Lihat Jadwal Ibadah",
-    primaryHref: "/jadwal-pelayanan/ibadah-minggu",
+    primaryHref: "/pelayanan/jadwal-pelayanan#ibadah-minggu",
     secondaryLabel: "Baca Warta Jemaat",
     secondaryHref: "/warta-jemaat/warta-mingguan",
   },

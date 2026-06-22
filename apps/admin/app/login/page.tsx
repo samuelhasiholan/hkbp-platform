@@ -9,7 +9,7 @@ export default function LoginPage() {
           <h1 className="mt-4 max-w-xl text-4xl font-bold tracking-normal">Kelola konten pelayanan dari satu dashboard.</h1>
         </div>
         <div className="grid max-w-lg gap-3 text-sm leading-6 text-slate-600">
-          <p>Login admin digunakan untuk mengelola warta, berita, halaman profil, galeri, jadwal pelayanan, dan struktur organisasi.</p>
+          <p>Login admin digunakan untuk mengelola warta, berita, halaman profil, galeri, jadwal pelayanan, dan struktur pelayanan.</p>
           <p>Gunakan akun seed awal untuk masuk pertama kali, lalu ganti kredensial saat modul user management sudah aktif.</p>
         </div>
       </section>

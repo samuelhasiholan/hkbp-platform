@@ -108,19 +108,19 @@ const defaultContactInfo: ContactInfo = {
 };
 const defaultSeoDefaults: SeoDefaults = {
   title: "HKBP Resort Srengseng Sawah",
-  description: "Website HKBP Resort Srengseng Sawah untuk informasi ibadah, organisasi, warta, berita, dan kontak gereja.",
+  description: "Website HKBP Resort Srengseng Sawah untuk informasi ibadah, pelayanan, warta, berita, dan kontak gereja.",
   ogImageUrl: "",
 };
 const defaultFooterSettings: FooterSettings = {
-  description: "Website jemaat untuk informasi ibadah, organisasi, warta, berita, dan pelayanan gereja.",
+  description: "Website jemaat untuk informasi ibadah, warta, berita, dan pelayanan gereja.",
   copyrightText: "",
 };
 const defaultHomeHero: HomeHero = {
   eyebrow: "Website Resmi",
   title: "HKBP Resort Srengseng Sawah",
-  description: "Pusat informasi ibadah, pelayanan, organisasi, warta jemaat, berita, dan kontak gereja untuk mendukung kehidupan persekutuan.",
+  description: "Pusat informasi ibadah, pelayanan, warta jemaat, berita, dan kontak gereja untuk mendukung kehidupan persekutuan.",
   primaryLabel: "Lihat Jadwal Ibadah",
-  primaryHref: "/jadwal-pelayanan/ibadah-minggu",
+  primaryHref: "/pelayanan/jadwal-pelayanan#ibadah-minggu",
   secondaryLabel: "Baca Warta Jemaat",
   secondaryHref: "/warta-jemaat/warta-mingguan",
 };
@@ -165,7 +165,7 @@ export function SettingsClient() {
       ]);
       const [settingsResult, profilesResult] = await Promise.all([settingsResponse.json(), profilesResponse.json()]);
       if (!settingsResponse.ok || !settingsResult.success) throw new Error(settingsResult.message ?? "Gagal memuat settings");
-      if (!profilesResponse.ok || !profilesResult.success) throw new Error(profilesResult.message ?? "Gagal memuat profil organisasi");
+      if (!profilesResponse.ok || !profilesResult.success) throw new Error(profilesResult.message ?? "Gagal memuat profil pelayanan");
 
       const settings = settingsResult.data as Settings;
       const pastorOptions = (profilesResult.data as Profile[]).filter((profile) => profile.isActive && isPastorCategory(profile.category));
@@ -295,7 +295,7 @@ export function SettingsClient() {
         <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="font-bold">Identitas Website</h3>
-            <p className="mt-1 text-sm text-slate-500">Nama gereja, nama sinode/organisasi, dan logo yang dipakai di header dan metadata website.</p>
+            <p className="mt-1 text-sm text-slate-500">Nama gereja, nama sinode atau gereja induk, dan logo yang dipakai di header dan metadata website.</p>
           </div>
           <div className="flex gap-2">
             <button type="button" onClick={loadSettings} disabled={hydrated && (loading || saving)} className="inline-flex h-10 items-center gap-2 rounded-md border border-slate-300 px-3 text-sm font-bold disabled:opacity-50">
@@ -312,7 +312,7 @@ export function SettingsClient() {
           {notice ? <Alert tone="good" text={notice} /> : null}
           {error ? <Alert tone="bad" text={error} /> : null}
           <Field label="Nama Gereja / Website" value={siteIdentity.siteName} onChange={(value) => updateSiteIdentity("siteName", value)} required />
-          <Field label="Nama Sinode / Organisasi" value={siteIdentity.denomination} onChange={(value) => updateSiteIdentity("denomination", value)} required />
+          <Field label="Nama Sinode / Gereja Induk" value={siteIdentity.denomination} onChange={(value) => updateSiteIdentity("denomination", value)} required />
           <Field label="Logo URL" value={siteIdentity.logoUrl} onChange={(value) => updateSiteIdentity("logoUrl", value)} />
         </div>
       </section>
@@ -404,7 +404,7 @@ export function SettingsClient() {
               </div>
               <div>
                 <p>
-                  Data jabatan dan foto akan mengikuti profil organisasi: <span className="font-semibold">{selectedPastor.role}</span>.
+                  Data jabatan dan foto akan mengikuti profil pelayanan: <span className="font-semibold">{selectedPastor.role}</span>.
                 </p>
                 {selectedPastor.photoUrl ? <p className="mt-1 truncate text-xs text-slate-500">{selectedPastor.photoUrl}</p> : <p className="mt-1 text-xs text-amber-700">Profil ini belum memiliki foto.</p>}
               </div>

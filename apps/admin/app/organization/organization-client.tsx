@@ -32,12 +32,12 @@ export function OrganizationClient() {
         fetch("/api/admin/organization/wijk", { cache: "no-store" }),
       ]);
       const [categoriesResult, profilesResult, wijkResult] = await Promise.all([categoriesResponse.json(), profilesResponse.json(), wijkResponse.json()]);
-      if (!categoriesResult.success || !profilesResult.success || !wijkResult.success) throw new Error("Gagal memuat organisasi");
+      if (!categoriesResult.success || !profilesResult.success || !wijkResult.success) throw new Error("Gagal memuat pelayanan");
       setCategories(categoriesResult.data);
       setProfiles(profilesResult.data);
       setWijk(wijkResult.data);
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Gagal memuat organisasi");
+      setError(loadError instanceof Error ? loadError.message : "Gagal memuat pelayanan");
     } finally {
       setLoading(false);
     }

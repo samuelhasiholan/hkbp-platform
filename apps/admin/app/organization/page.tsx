@@ -8,7 +8,7 @@ export default async function OrganizationPage() {
   if (!user) redirect("/login");
 
   return (
-    <AdminShell eyebrow="Organization" title="Kelola Organisasi" user={user}>
+    <AdminShell eyebrow="Pelayanan" title="Kelola Profil Pelayanan" user={user}>
       <OrganizationClient />
     </AdminShell>
   );
