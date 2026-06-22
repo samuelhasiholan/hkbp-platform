@@ -1,8 +1,15 @@
 import type { FastifyInstance } from "fastify";
+import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { ok } from "../lib/response.js";
 
 const published = { status: "PUBLISHED" as const, deletedAt: null };
+const feedbackSchema = z.object({
+  fullName: z.string().trim().min(2).max(120),
+  category: z.enum(["IBADAH", "PELAYANAN", "SARANA_PRASARANA", "LAINNYA"]),
+  contactInfo: z.string().trim().max(160).optional().nullable(),
+  message: z.string().trim().min(10).max(2000),
+});
 
 async function hydrateSiteSettings(settings: Record<string, unknown>) {
   const pastorGreeting = settings.pastorGreeting as { pastorProfileId?: string } | undefined;
@@ -34,6 +41,32 @@ async function hydrateSiteSettings(settings: Record<string, unknown>) {
 }
 
 export async function publicRoutes(app: FastifyInstance) {
+  app.post("/api/public/feedback", async (request, reply) => {
+    const parsed = feedbackSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.code(400).send({
+        success: false,
+        data: null,
+        message: "Data kritik dan saran belum valid",
+        meta: parsed.error.flatten(),
+      });
+    }
+
+    const payload = parsed.data;
+    const item = await prisma.feedbackSubmission.create({
+      data: {
+        fullName: payload.fullName,
+        category: payload.category,
+        contactInfo: payload.contactInfo || null,
+        message: payload.message,
+      },
+    });
+
+    return reply
+      .code(201)
+      .send(ok(item, undefined, "Terima kasih, masukan Anda sudah terkirim."));
+  });
+
   app.get("/api/public/site-settings", async () => {
     const settings = await prisma.siteSetting.findMany();
     return ok(

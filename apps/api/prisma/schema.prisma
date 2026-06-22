@@ -26,6 +26,12 @@ enum WartaLanguage {
   INDONESIA
   BATAK
 }
+enum FeedbackCategory {
+  IBADAH
+  PELAYANAN
+  SARANA_PRASARANA
+  LAINNYA
+}
 model User {
   id           String     @id @default(uuid())
   name         String
@@ -232,6 +238,15 @@ model SiteSetting {
   value     Json
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model FeedbackSubmission {
+  id          String           @id @default(uuid())
+  fullName    String
+  category    FeedbackCategory
+  contactInfo String?
+  message     String
+  createdAt   DateTime         @default(now())
 }
 
 model AuditLog {

@@ -1,4 +1,4 @@
-import { CalendarDays, FileText, GalleryHorizontalEnd, LayoutDashboard, Newspaper, Settings, Users } from "lucide-react";
+import { CalendarDays, FileText, GalleryHorizontalEnd, Inbox, LayoutDashboard, Newspaper, Settings, Users } from "lucide-react";
 import Link from "next/link";
 import type { CurrentUser } from "../_lib/auth";
 import { LogoutButton } from "./logout-button";
@@ -10,6 +10,7 @@ const navigation = [
   { label: "Gallery", href: "/gallery", icon: GalleryHorizontalEnd },
   { label: "Publications", href: "/publications", icon: Newspaper },
   { label: "Warta", href: "/warta", icon: FileText },
+  { label: "Kritik & Saran", href: "/feedback", icon: Inbox },
   { label: "Schedules", href: "/schedules", icon: CalendarDays },
   { label: "Settings", href: "/settings", icon: Settings },
 ];
